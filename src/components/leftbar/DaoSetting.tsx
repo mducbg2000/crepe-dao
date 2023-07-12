@@ -8,8 +8,8 @@ import {
   Typography,
 } from "@suid/material";
 import { Show } from "solid-js";
-import { address } from "../../reactive/account";
-import { storage } from "../../reactive/contract";
+import { address } from "../../global/account";
+import { storage } from "../../global/contract";
 import {
   getPoint,
   getQuorum,

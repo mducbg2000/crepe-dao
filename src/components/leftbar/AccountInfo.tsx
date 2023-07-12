@@ -5,7 +5,7 @@ import {
   ListItemText,
   Typography,
 } from "@suid/material";
-import { address } from "../../reactive/account";
+import { address } from "../../global/account";
 
 export default function AccountInfo() {
   return (

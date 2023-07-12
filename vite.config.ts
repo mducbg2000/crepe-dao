@@ -1,6 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import suidPlugin from "@suid/vite-plugin";
-import { defineConfig } from "vite";
+import { visualizer } from "rollup-plugin-visualizer";
+import { defineConfig, type PluginOption } from "vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import solidPlugin from "vite-plugin-solid";
 // https://vitejs.dev/config/
@@ -17,6 +18,7 @@ export default defineConfig(() => ({
     }),
     suidPlugin(),
     solidPlugin(),
+    visualizer() as unknown as PluginOption,
   ],
   test: {
     environment: "happy-dom",

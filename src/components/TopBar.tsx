@@ -14,7 +14,7 @@ import { Show, createSignal } from "solid-js";
 
 import crepeLogo from "../assets/logo.svg";
 import appConfig from "../config";
-import { setPrivateKey } from "../reactive/account";
+import { setPrivateKey } from "../global/account";
 import Notification from "./utils/Notification";
 import OnHoverPopover from "./utils/OnHoverPopover";
 export const [nonBlockLoading, setNonBlockLoading] = createSignal(false);

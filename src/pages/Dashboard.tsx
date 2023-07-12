@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Container,
   CssBaseline,
@@ -11,7 +12,7 @@ import { For, Show } from "solid-js";
 import LeftBar from "../components/LeftBar";
 import PollInfo from "../components/PollInfo";
 import TopBar from "../components/TopBar";
-import { storage } from "../reactive/contract";
+import { storage } from "../global/contract";
 import { getModelsInCurrentRound } from "../services/storage-service";
 
 export default function Dashboard() {
@@ -31,11 +32,15 @@ export default function Dashboard() {
               <For each={getModelsInCurrentRound(storage()!)}>
                 {(item) => <PollInfo model={item} />}
               </For>
+              <Show when={getModelsInCurrentRound(storage()!).length === 0}>
+                <Alert severity="info">
+                  There are no updates for this round yet
+                </Alert>
+              </Show>
             </Stack>
           </List>
         </Show>
       </Box>
-      
     </Container>
   );
 }

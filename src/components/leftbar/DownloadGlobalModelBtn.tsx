@@ -7,20 +7,19 @@ import {
   Typography,
 } from "@suid/material";
 
-import { globalModel, setGlobalModel } from "../../reactive/model";
+import { createResource } from "solid-js";
+import { storage } from "../../global/contract";
+import { getLastestGlobalModel } from "../../services/io-service";
 import OnHoverPopover from "../utils/OnHoverPopover";
 
 export default function DownloadGlobalModelBtn() {
-  const downloadLastestGlobalModel = async () => {
-    await setGlobalModel.refetch();
-    globalModel()?.save("downloads://lastest-global");
-  };
+  const [globalModel] = createResource(storage, getLastestGlobalModel);
   return (
     <OnHoverPopover content="Download lastest global model">
       <ListItem disablePadding>
         <ListItemButton
           disabled={globalModel() === undefined}
-          onClick={downloadLastestGlobalModel}
+          onClick={() => globalModel()!.save("weights://lastest")}
         >
           <ListItemIcon>
             <Download color="info" />

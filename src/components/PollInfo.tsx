@@ -23,8 +23,8 @@ import LinearProgress, {
 } from "@suid/material/LinearProgress";
 import BigNumber from "bignumber.js";
 import { For, Show, createResource, createSignal } from "solid-js";
-import { address } from "../reactive/account";
-import { storage } from "../reactive/contract";
+import { address } from "../global/account";
+import { storage } from "../global/contract";
 import { loadModel } from "../services/io-service";
 import {
   getQuorum,
@@ -159,7 +159,7 @@ export default function PollInfo(props: { model: ModelView }) {
             color="secondary"
             sx={{ textTransform: "none" }}
             disabled={model.loading}
-            onClick={() => model()?.save(`downloads://${props.model.ipfsCid}`)}
+            onClick={() => model()?.save(`weights://${props.model.ipfsCid}`)}
           >
             <Typography variant="h6">{props.model.ipfsCid}</Typography>
           </Button>

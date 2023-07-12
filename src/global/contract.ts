@@ -15,5 +15,3 @@ export const [storage, setStorage] = createResource(
   async (c: ContractAbstraction<ContractProvider>) =>
     (await c.storage()) satisfies DaoStorage,
 );
-
-export type ContractResource = typeof contract;

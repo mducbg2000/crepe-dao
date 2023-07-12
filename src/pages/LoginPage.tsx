@@ -11,12 +11,10 @@ import {
 import { Show, createSignal } from "solid-js";
 import crepeLogo from "../assets/logo.svg";
 
-import { setPrivateKey, signer } from "../reactive/account";
+import { setPrivateKey, signer } from "../global/account";
 
 export default function LoginPage() {
-  const [input, setInput] = createSignal<string>(
-    "edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq",
-  );
+  const [input, setInput] = createSignal<string>("");
 
   const login = () => {
     setPrivateKey(input());

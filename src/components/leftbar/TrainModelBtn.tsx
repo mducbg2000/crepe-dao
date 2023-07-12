@@ -7,7 +7,6 @@ import {
   Typography,
 } from "@suid/material";
 import { createSignal } from "solid-js";
-import { globalModel } from "../../reactive/model";
 import OnHoverPopover from "../utils/OnHoverPopover";
 import TrainModelDialog from "../utils/TrainModelDialog";
 
@@ -17,10 +16,7 @@ export default function TrainModelBtn() {
     <>
       <OnHoverPopover content="Continue training model from lastest global model with your own dataset">
         <ListItem disablePadding>
-          <ListItemButton
-            disabled={globalModel() === undefined}
-            onClick={() => setOpenTrainDialog(true)}
-          >
+          <ListItemButton onClick={() => setOpenTrainDialog(true)}>
             <ListItemIcon>
               <Psychology color="info" />
             </ListItemIcon>

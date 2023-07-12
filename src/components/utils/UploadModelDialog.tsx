@@ -15,7 +15,7 @@ import {
 import { type DialogProps } from "@suid/material/Dialog";
 import styled from "@suid/material/styles/styled";
 import { ErrorBoundary, Show, createResource, createSignal } from "solid-js";
-import { setStorage } from "../../reactive/contract";
+import { setStorage } from "../../global/contract";
 import { addLocalModel } from "../../services/contract-service";
 import { getFeaturesAndLabels } from "../../services/io-service";
 import { addFile } from "../../services/ipfs-service";
@@ -49,7 +49,7 @@ export default function UploadModelDialog(props: DialogProps) {
       setBlockLoading(true);
       const cid = await addFile(weightsFile()!);
       await addLocalModel(cid, numSamples()!);
-      setStorage.refetch();
+      await setStorage.refetch();
       setAlertInfo(() => ({
         severity: "success",
         content: "Successful add model to blockchain",

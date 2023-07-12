@@ -16,12 +16,12 @@ import { type DialogProps } from "@suid/material/Dialog";
 import styled from "@suid/material/styles/styled";
 import { Show, createResource } from "solid-js";
 import { createStore } from "solid-js/store";
-import { storage } from "../../reactive/contract";
-import { globalModel } from "../../reactive/model";
+import { storage } from "../../global/contract";
 import {
   getFeaturesAndLabels,
   getLastestGlobalModel,
 } from "../../services/io-service";
+import { setAlertInfo } from "./Notification";
 
 const FileInput = styled("input")({
   display: "none",
@@ -34,15 +34,25 @@ type TrainParams = {
 
 export default function TrainModelDialog(props: DialogProps) {
   const [state, setState] = createStore<TrainParams>({ epochs: 20 });
+  const [globalModel] = createResource(storage, getLastestGlobalModel);
 
   const fit = async (params: TrainParams) => {
-    if (params.csv === undefined) return undefined;
-    const globalModel = await getLastestGlobalModel(storage()!);
-    const { features, labels } = await getFeaturesAndLabels(params.csv);
-    const history = await globalModel.fit(features, labels, {
-      epochs: params.epochs,
-    });
-    return history.history["loss"]?.pop() as number;
+    try {
+      if (params.csv === undefined) return undefined;
+      const { features, labels } = await getFeaturesAndLabels(params.csv);
+      const history = await globalModel()!.fit(features, labels, {
+        epochs: params.epochs,
+        shuffle: true,
+        validationSplit: 0.05,
+      });
+      return history.history["loss"]?.pop() as number;
+    } catch (err) {
+      setAlertInfo(() => ({
+        severity: "error",
+        content: (err as Error).toString(),
+      }));
+      return undefined;
+    }
   };
 
   const [trainingResult, { refetch }] = createResource(state, fit);
@@ -112,6 +122,7 @@ export default function TrainModelDialog(props: DialogProps) {
             <Button
               variant="outlined"
               endIcon={<Psychology />}
+              disabled={globalModel.loading}
               onClick={() => refetch()}
             >
               Start Training
@@ -120,7 +131,9 @@ export default function TrainModelDialog(props: DialogProps) {
               variant="outlined"
               endIcon={<Save />}
               disabled={trainingResult() === undefined}
-              onClick={() => globalModel()?.save("downloads://new")}
+              onClick={() =>
+                globalModel()!.save(`weights://${state.csv?.name.slice(0, -4)}`)
+              }
             >
               Export
             </Button>

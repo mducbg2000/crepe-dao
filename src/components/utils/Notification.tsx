@@ -1,7 +1,7 @@
 import { Close } from "@suid/icons-material";
-import { Alert, IconButton } from "@suid/material";
+import { Alert, IconButton, LinearProgress } from "@suid/material";
 import { AlertColor } from "@suid/material/Alert";
-import { Show, createSignal } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 type AlertInfo = {
   severity: AlertColor;
@@ -9,6 +9,21 @@ type AlertInfo = {
 };
 
 export const [alertInfo, setAlertInfo] = createSignal<AlertInfo>();
+
+const [progress, setProgress] = createSignal(100);
+
+createEffect(() => {
+  if (alertInfo() !== undefined) {
+    setProgress(100);
+    const timer = setInterval(() => {
+      setProgress((now) => now - 1);
+    }, 40);
+    setTimeout(() => {
+      setAlertInfo();
+      clearInterval(timer);
+    }, 4000);
+  }
+});
 
 export default function Notification() {
   return (
@@ -24,6 +39,7 @@ export default function Notification() {
       >
         {alertInfo()?.content}
       </Alert>
+      <LinearProgress variant="determinate" value={progress()} color="info" />
     </Show>
   );
 }
