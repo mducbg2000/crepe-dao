@@ -6,6 +6,7 @@ import {
   Typography,
 } from "@suid/material";
 import { address } from "../../global/account";
+import CopyBtn from "../utils/CopyBtn";
 
 export default function AccountInfo() {
   return (
@@ -14,7 +15,12 @@ export default function AccountInfo() {
         <AccountBalanceWallet color="info" />
       </ListItemIcon>
       <ListItemText
-        primary={<Typography variant="button">Your Address:</Typography>}
+        primary={
+          <Typography variant="button">
+            Your Address:
+            <CopyBtn value={address()} />
+          </Typography>
+        }
         secondary={
           <Typography textOverflow="ellipsis" overflow="clip">
             {address()}

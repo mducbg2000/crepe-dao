@@ -37,8 +37,8 @@ export default function TrainModelDialog(props: DialogProps) {
   const [globalModel] = createResource(storage, getLastestGlobalModel);
 
   const fit = async (params: TrainParams) => {
+    if (params.csv === undefined) return undefined;
     try {
-      if (params.csv === undefined) return undefined;
       const { features, labels } = await getFeaturesAndLabels(params.csv);
       const history = await globalModel()!.fit(features, labels, {
         epochs: params.epochs,
@@ -60,7 +60,7 @@ export default function TrainModelDialog(props: DialogProps) {
   return (
     <>
       <Dialog {...props}>
-        <DialogTitle>Evaluate Model</DialogTitle>
+        <DialogTitle>Train Model</DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <Box justifyContent="space-between" displayRaw="flex">
@@ -68,9 +68,6 @@ export default function TrainModelDialog(props: DialogProps) {
               <Show when={state.csv !== undefined}>
                 <Chip
                   label={state.csv?.name}
-                  onDelete={() => {
-                    setState("csv", undefined);
-                  }}
                 />
               </Show>
             </Box>
@@ -87,7 +84,9 @@ export default function TrainModelDialog(props: DialogProps) {
               />
             </Box>
             <Box justifyContent="space-between" displayRaw="flex">
-              <Typography variant="overline">Train result: </Typography>
+              <Typography variant="overline">
+                Train result (Last MSE value):
+              </Typography>
               <Show
                 when={!trainingResult.loading}
                 fallback={<CircularProgress />}

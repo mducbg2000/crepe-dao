@@ -29,8 +29,8 @@ type EvaluateModelDialogProps = {
 export default function EvaluateModelDialog(props: EvaluateModelDialogProps) {
   const [datasetFile, setDatasetFile] = createSignal<File>();
   const evaluate = async (csv?: File) => {
+    if (csv === undefined) return undefined;
     try {
-      if (csv === undefined) return undefined;
       const { features, labels } = await getFeaturesAndLabels(csv);
       const loss = props.model.evaluate(features, labels) as Scalar;
       setAlertInfo();

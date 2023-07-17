@@ -32,6 +32,7 @@ import {
   getTotalPoint,
   type ModelView,
 } from "../services/storage-service";
+import CopyBtn from "./utils/CopyBtn";
 import EvaluateModelDialog from "./utils/EvaluateModelDialog";
 import OnHoverPopover from "./utils/OnHoverPopover";
 import VoteModelDialog from "./utils/VoteModelDialog";
@@ -154,15 +155,18 @@ export default function PollInfo(props: { model: ModelView }) {
       />
       <CardHeader
         title={
-          <Button
-            endIcon={<Download />}
-            color="secondary"
-            sx={{ textTransform: "none" }}
-            disabled={model.loading}
-            onClick={() => model()?.save(`weights://${props.model.ipfsCid}`)}
-          >
-            <Typography variant="h6">{props.model.ipfsCid}</Typography>
-          </Button>
+          <>
+            <Button
+              endIcon={<Download />}
+              color="secondary"
+              sx={{ textTransform: "none" }}
+              disabled={model.loading}
+              onClick={() => model()?.save(`weights://${props.model.ipfsCid}`)}
+            >
+              <Typography variant="h6">{props.model.ipfsCid}</Typography>
+            </Button>
+            <CopyBtn value={props.model.ipfsCid} />
+          </>
         }
         action={
           <Show

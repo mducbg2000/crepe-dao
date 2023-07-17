@@ -1,18 +1,15 @@
 import { Logout } from "@suid/icons-material";
 import {
   AppBar,
-  Avatar,
   Backdrop,
   Button,
   CircularProgress,
   LinearProgress,
   Stack,
   Toolbar,
-  Typography,
 } from "@suid/material";
 import { Show, createSignal } from "solid-js";
 
-import crepeLogo from "../assets/logo.svg";
 import appConfig from "../config";
 import { setPrivateKey } from "../global/account";
 import Notification from "./utils/Notification";
@@ -25,8 +22,16 @@ export default function TopBar() {
       <Toolbar sx={{ justifyContent: "space-between" }}>
         <OnHoverPopover content="View contract on tzkt.io">
           <Stack spacing={1} direction="row">
-            <Avatar src={crepeLogo} />
-            <Typography
+            {/* <Avatar src={crepeLogo} /> */}
+            <a
+              href={`https://ghostnet.tzkt.io/${appConfig.VITE_CONTRACT_ADDRESS}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img src="/banner.svg" height="40px" />
+            </a>
+
+            {/* <Typography
               sx={{
                 width: "fit-content",
                 cursor: "pointer",
@@ -41,7 +46,7 @@ export default function TopBar() {
               }
             >
               CrepeDao
-            </Typography>
+            </Typography> */}
           </Stack>
         </OnHoverPopover>
         <Button

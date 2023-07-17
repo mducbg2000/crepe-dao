@@ -1,8 +1,9 @@
 import { Box, Popover, Typography } from "@suid/material";
+import { PopoverProps } from "@suid/material/Popover";
 import { createSignal, type ParentProps } from "solid-js";
 
 export default function OnHoverPopover(
-  props: ParentProps & { content: string }
+  props: ParentProps & { content: string } & Partial<PopoverProps>,
 ) {
   const [anchorEl, setAnchorEl] = createSignal<Element | null>(null);
   const handlePopoverOpen = (event: { currentTarget: Element }) => {
@@ -26,7 +27,7 @@ export default function OnHoverPopover(
       </Box>
       <Popover
         id="on-hover-popover"
-        sx={{ pointerEvents: "none" }}
+        sx={{ pointerEvents: "none", zIndex: 2000 }}
         open={open()}
         anchorEl={anchorEl()}
         anchorOrigin={{
@@ -39,6 +40,7 @@ export default function OnHoverPopover(
         }}
         onClose={handlePopoverClose}
         disableRestoreFocus
+        {...props}
       >
         <Typography sx={{ p: 1 }}>{props.content}</Typography>
       </Popover>

@@ -11,6 +11,7 @@ import {
 import { Show, createSignal } from "solid-js";
 import crepeLogo from "../assets/logo.svg";
 
+import DocumentBtn from "../components/utils/DocumentBtn";
 import { setPrivateKey, signer } from "../global/account";
 
 export default function LoginPage() {
@@ -45,6 +46,7 @@ export default function LoginPage() {
           />
           <Typography align="center" variant="h4">
             Crepe DAO Client
+            <DocumentBtn />
           </Typography>
           <TextField
             id="private-key"
