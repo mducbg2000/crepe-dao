@@ -43,7 +43,6 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-solid": "^0.12.1",
-    "happy-dom": "^10.0.3",
     "jsdom": "^22.1.0",
     "prettier": "^3.0.0",
     "rollup-plugin-visualizer": "^5.9.2",
