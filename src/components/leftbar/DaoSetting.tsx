@@ -35,7 +35,10 @@ export default function DaoSetting() {
           </Stack>
         }
       >
-        <ListItem dense secondaryAction={getPoint(storage()!, address() ?? "")}>
+        <ListItem
+          dense
+          secondaryAction={getPoint(storage()!, address()!) || "0"}
+        >
           <ListItemText
             primary={<Typography variant="overline">Your Point:</Typography>}
           />

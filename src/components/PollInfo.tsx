@@ -37,6 +37,9 @@ import VoteModelDialog from "./utils/VoteModelDialog";
 
 export default function PollInfo(props: { model: ModelView }) {
   const m = () => props.model;
+  const total = () => getTotalPoint(storage()!);
+  const participationRate = () =>
+    ((m().acceptPoint + m().rejectPoint + m().abstainPoint) / total()) * 100;
   const voteResultsDetail = (): Array<{
     label: string;
     value: number;
@@ -45,29 +48,26 @@ export default function PollInfo(props: { model: ModelView }) {
   }> => [
     {
       label: "Accept",
-      value: (m().acceptPoint / getTotalPoint(storage()!)) * 100,
+      value: (m().acceptPoint / total()) * 100,
       color: "success",
-      description: `${m().acceptPoint} / ${getTotalPoint(
-        storage()!,
-      )} (${Math.round((m().acceptPoint / getTotalPoint(storage()!)) * 100)}%)`,
+      description: `${m().acceptPoint} / ${total()},
+      )} (${Math.round((m().acceptPoint / total()) * 100)}%)`,
     },
     {
       label: "Reject",
-      value: (m().rejectPoint / getTotalPoint(storage()!)) * 100,
+      value: (m().rejectPoint / total()) * 100,
       color: "error",
-      description: `${m().rejectPoint} / ${getTotalPoint(
-        storage()!,
-      )} (${Math.round((m().rejectPoint / getTotalPoint(storage()!)) * 100)}%)`,
+      description: `${m().rejectPoint} / ${total()} (${Math.round(
+        (m().rejectPoint / total()) * 100,
+      )}%)`,
     },
     {
       label: "Abstain",
-      value: (m().abstainPoint / getTotalPoint(storage()!)) * 100,
+      value: (m().abstainPoint / total()) * 100,
       color: "warning",
       description: `${m().abstainPoint} / ${getTotalPoint(
         storage()!,
-      )} (${Math.round(
-        (m().abstainPoint / getTotalPoint(storage()!)) * 100,
-      )}%)`,
+      )} (${Math.round((m().abstainPoint / total()) * 100)}%)`,
     },
   ];
   const voteResult = (): Array<{
@@ -78,25 +78,12 @@ export default function PollInfo(props: { model: ModelView }) {
   }> => [
     {
       label: "Participation Rate",
-      value:
-        ((m().acceptPoint + m().rejectPoint + m().abstainPoint) /
-          getTotalPoint(storage()!)) *
-        100,
-      color:
-        ((m().acceptPoint + m().rejectPoint + m().abstainPoint) /
-          getTotalPoint(storage()!)) *
-          100 <
-        storage()!.quorum * 100
-          ? "info"
-          : "success",
+      value: participationRate(),
+      color: participationRate() < storage()!.quorum * 100 ? "info" : "success",
       description: `(${m().acceptPoint} +
           ${m().rejectPoint} +
           ${m().abstainPoint}) /
-        ${getTotalPoint(storage()!)} (${Math.round(
-          ((m().acceptPoint + m().rejectPoint + m().abstainPoint) /
-            getTotalPoint(storage()!)) *
-            100,
-        )}%)`,
+        ${getTotalPoint(storage()!)} (${Math.round(participationRate())}%)`,
     },
     {
       label: "Accept Rate",
