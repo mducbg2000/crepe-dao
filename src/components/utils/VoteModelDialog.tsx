@@ -8,7 +8,7 @@ import {
 } from "@suid/material";
 import Dialog, { DialogProps } from "@suid/material/Dialog";
 
-import { setStorage } from "../../global/contract";
+import { refetchStorage } from "../../global/contract-storage";
 import { VoteValue, vote } from "../../services/contract-service";
 import { setBlockLoading } from "../TopBar";
 import { setAlertInfo } from "./Notification";
@@ -20,7 +20,7 @@ export default function VoteModelDialog(
     try {
       setBlockLoading(true);
       await vote(props.modelCid, o);
-      await setStorage.refetch();
+      await refetchStorage();
       setAlertInfo(() => ({
         severity: "success",
         content: "Voting successful",

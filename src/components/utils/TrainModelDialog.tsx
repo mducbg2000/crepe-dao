@@ -16,7 +16,7 @@ import { type DialogProps } from "@suid/material/Dialog";
 import styled from "@suid/material/styles/styled";
 import { Show, createResource } from "solid-js";
 import { createStore } from "solid-js/store";
-import { storage } from "../../global/contract";
+import { storage } from "../../global/contract-storage";
 import {
   getFeaturesAndLabels,
   getLastestGlobalModel,
@@ -66,9 +66,7 @@ export default function TrainModelDialog(props: DialogProps) {
             <Box justifyContent="space-between" displayRaw="flex">
               <Typography variant="overline">Dataset: </Typography>
               <Show when={state.csv !== undefined}>
-                <Chip
-                  label={state.csv?.name}
-                />
+                <Chip label={state.csv?.name} />
               </Show>
             </Box>
             <Box justifyContent="space-between" displayRaw="flex">

@@ -1,33 +1,26 @@
 import * as tf from "@tensorflow/tfjs";
 import fedAvg, { ModelUpdate } from "./ai-service";
+import { getLastestAcceptedModels } from "./extract-storage-service";
 import { retrieveFile } from "./ipfs-service";
-import { DaoStorage, getLastestAcceptedModels } from "./storage-service";
-async function getWeightsData(
-  weightsManifest: tf.io.WeightsManifestConfig,
-  weightsCid: string,
-): Promise<[tf.io.WeightsManifestEntry[], ArrayBuffer]> {
-  const buffer = (await retrieveFile(weightsCid)) as ArrayBuffer;
-  const weightSpecs = tf.io.getWeightSpecs(weightsManifest);
-  return [weightSpecs, buffer];
-}
-
-type CsvRow = {
-  xs: {
-    [x: string]: number;
-  };
-  ys: {
-    [y: string]: number;
-  };
-};
-
-async function loadModelArtifacts(topoCid: string, weightsCid: string) {
-  const modelJSON = (await retrieveFile(topoCid, "json")) as tf.io.ModelJSON;
-  return tf.io.getModelArtifactsForJSON(modelJSON, (weightsManifest) =>
-    getWeightsData(weightsManifest, weightsCid),
-  );
-}
+import { DaoState } from "./serialized-service";
 
 export async function loadModel(modelTopoCid: string, weightsCid: string) {
+  const getWeightsData = async (
+    weightsManifest: tf.io.WeightsManifestConfig,
+    weightsCid: string,
+  ): Promise<[tf.io.WeightsManifestEntry[], ArrayBuffer]> => {
+    const buffer = (await retrieveFile(weightsCid)) as ArrayBuffer;
+    const weightSpecs = tf.io.getWeightSpecs(weightsManifest);
+    return [weightSpecs, buffer];
+  };
+
+  const loadModelArtifacts = async (topoCid: string, weightsCid: string) => {
+    const modelJSON = (await retrieveFile(topoCid, "json")) as tf.io.ModelJSON;
+    return tf.io.getModelArtifactsForJSON(modelJSON, (weightsManifest) =>
+      getWeightsData(weightsManifest, weightsCid),
+    );
+  };
+
   const loader: tf.io.IOHandler = {
     load: async () => loadModelArtifacts(modelTopoCid, weightsCid),
   };
@@ -38,6 +31,15 @@ export async function loadModel(modelTopoCid: string, weightsCid: string) {
   });
   return model;
 }
+
+type CsvRow = {
+  xs: {
+    [x: string]: number;
+  };
+  ys: {
+    [y: string]: number;
+  };
+};
 
 export async function getFeaturesAndLabels(csvFile: File) {
   const csvDataset = new tf.data.CSVDataset(
@@ -87,14 +89,14 @@ export async function getFeaturesAndLabels(csvFile: File) {
   return { features, labels };
 }
 
-export async function getLastestGlobalModel(s: DaoStorage) {
+export async function getLastestGlobalModel(s: DaoState) {
   const lastestAcceptedModels = getLastestAcceptedModels(s);
   return lastestAcceptedModels.length === 0
-    ? await loadModel(s.model_topo_cid, s.init_weights_cid)
+    ? await loadModel(s.modelTopoCid, s.initWeightsCid)
     : fedAvg(
         await Promise.all(
           lastestAcceptedModels.map(async (info) => {
-            const model = await loadModel(s.model_topo_cid, info.ipfsCid);
+            const model = await loadModel(s.modelTopoCid, info.ipfsCid);
             return {
               model,
               numSamples: info.numberOfSamples,

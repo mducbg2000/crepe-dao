@@ -12,8 +12,8 @@ import { For, Show } from "solid-js";
 import LeftBar from "../components/LeftBar";
 import PollInfo from "../components/PollInfo";
 import TopBar from "../components/TopBar";
-import { storage } from "../global/contract";
-import { getModelsInCurrentRound } from "../services/storage-service";
+import { storage } from "../global/contract-storage";
+import { getModelsInCurrentRound } from "../services/extract-storage-service";
 
 export default function Dashboard() {
   return (

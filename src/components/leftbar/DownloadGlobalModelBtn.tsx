@@ -8,7 +8,7 @@ import {
 } from "@suid/material";
 
 import { createResource } from "solid-js";
-import { storage } from "../../global/contract";
+import { storage } from "../../global/contract-storage";
 import { getLastestGlobalModel } from "../../services/io-service";
 import OnHoverPopover from "../utils/OnHoverPopover";
 

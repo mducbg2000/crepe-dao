@@ -24,20 +24,19 @@ import LinearProgress, {
 import BigNumber from "bignumber.js";
 import { For, Show, createResource, createSignal } from "solid-js";
 import { address } from "../global/account";
-import { storage } from "../global/contract";
-import { loadModel } from "../services/io-service";
+import { storage } from "../global/contract-storage";
 import {
-  getQuorum,
-  getSuperMajority,
   getTotalPoint,
   type ModelView,
-} from "../services/storage-service";
+} from "../services/extract-storage-service";
+import { loadModel } from "../services/io-service";
 import CopyBtn from "./utils/CopyBtn";
 import EvaluateModelDialog from "./utils/EvaluateModelDialog";
 import OnHoverPopover from "./utils/OnHoverPopover";
 import VoteModelDialog from "./utils/VoteModelDialog";
 
 export default function PollInfo(props: { model: ModelView }) {
+  const m = () => props.model;
   const voteResultsDetail = (): Array<{
     label: string;
     value: number;
@@ -46,32 +45,28 @@ export default function PollInfo(props: { model: ModelView }) {
   }> => [
     {
       label: "Accept",
-      value: (props.model.acceptPoint / getTotalPoint(storage()!)) * 100,
+      value: (m().acceptPoint / getTotalPoint(storage()!)) * 100,
       color: "success",
-      description: `${props.model.acceptPoint} / ${getTotalPoint(
+      description: `${m().acceptPoint} / ${getTotalPoint(
         storage()!,
-      )} (${Math.round(
-        (props.model.acceptPoint / getTotalPoint(storage()!)) * 100,
-      )}%)`,
+      )} (${Math.round((m().acceptPoint / getTotalPoint(storage()!)) * 100)}%)`,
     },
     {
       label: "Reject",
-      value: (props.model.rejectPoint / getTotalPoint(storage()!)) * 100,
+      value: (m().rejectPoint / getTotalPoint(storage()!)) * 100,
       color: "error",
-      description: `${props.model.rejectPoint} / ${getTotalPoint(
+      description: `${m().rejectPoint} / ${getTotalPoint(
         storage()!,
-      )} (${Math.round(
-        (props.model.rejectPoint / getTotalPoint(storage()!)) * 100,
-      )}%)`,
+      )} (${Math.round((m().rejectPoint / getTotalPoint(storage()!)) * 100)}%)`,
     },
     {
       label: "Abstain",
-      value: (props.model.abstainPoint / getTotalPoint(storage()!)) * 100,
+      value: (m().abstainPoint / getTotalPoint(storage()!)) * 100,
       color: "warning",
-      description: `${props.model.abstainPoint} / ${getTotalPoint(
+      description: `${m().abstainPoint} / ${getTotalPoint(
         storage()!,
       )} (${Math.round(
-        (props.model.abstainPoint / getTotalPoint(storage()!)) * 100,
+        (m().abstainPoint / getTotalPoint(storage()!)) * 100,
       )}%)`,
     },
   ];
@@ -84,52 +79,38 @@ export default function PollInfo(props: { model: ModelView }) {
     {
       label: "Participation Rate",
       value:
-        ((props.model.acceptPoint +
-          props.model.rejectPoint +
-          props.model.abstainPoint) /
+        ((m().acceptPoint + m().rejectPoint + m().abstainPoint) /
           getTotalPoint(storage()!)) *
         100,
       color:
-        ((props.model.acceptPoint +
-          props.model.rejectPoint +
-          props.model.abstainPoint) /
+        ((m().acceptPoint + m().rejectPoint + m().abstainPoint) /
           getTotalPoint(storage()!)) *
           100 <
-        getQuorum(storage()!)
+        storage()!.quorum * 100
           ? "info"
           : "success",
-      description: `(${props.model.acceptPoint} +
-          ${props.model.rejectPoint} +
-          ${props.model.abstainPoint}) /
+      description: `(${m().acceptPoint} +
+          ${m().rejectPoint} +
+          ${m().abstainPoint}) /
         ${getTotalPoint(storage()!)} (${Math.round(
-          ((props.model.acceptPoint +
-            props.model.rejectPoint +
-            props.model.abstainPoint) /
+          ((m().acceptPoint + m().rejectPoint + m().abstainPoint) /
             getTotalPoint(storage()!)) *
             100,
         )}%)`,
     },
     {
       label: "Accept Rate",
-      value:
-        (props.model.acceptPoint /
-          (props.model.acceptPoint + props.model.rejectPoint)) *
-        100,
+      value: (m().acceptPoint / (m().acceptPoint + m().rejectPoint)) * 100,
       color:
-        new BigNumber(
-          props.model.acceptPoint /
-            (props.model.acceptPoint + props.model.rejectPoint),
-        )
+        new BigNumber(m().acceptPoint / (m().acceptPoint + m().rejectPoint))
           .multipliedBy(100)
           .decimalPlaces(2)
-          .toNumber() < getSuperMajority(storage()!)
+          .toNumber() < storage()!.superMajority
           ? "info"
           : "success",
-      description: `${props.model.acceptPoint} /
-        (${props.model.acceptPoint} + ${props.model.rejectPoint}) (${Math.round(
-          (props.model.acceptPoint /
-            (props.model.acceptPoint + props.model.rejectPoint)) *
-            100,
+      description: `${m().acceptPoint} /
+        (${m().acceptPoint} + ${m().rejectPoint}) (${Math.round(
+          (m().acceptPoint / (m().acceptPoint + m().rejectPoint)) * 100,
         )}%)`,
     },
   ];
@@ -138,19 +119,19 @@ export default function PollInfo(props: { model: ModelView }) {
   const [openEvaluateDialog, setOpenEvaluateDialog] = createSignal(false);
   const [openVoteDialog, setOpenVoteDialog] = createSignal(false);
   const [model] = createResource(async () =>
-    loadModel(storage()!.model_topo_cid, props.model.ipfsCid),
+    loadModel(storage()!.modelTopoCid, m().ipfsCid),
   );
   return (
     <Card raised>
       <EvaluateModelDialog
         open={openEvaluateDialog()}
-        modelCid={props.model.ipfsCid}
+        modelCid={m().ipfsCid}
         model={model()!}
         onClose={() => setOpenEvaluateDialog(false)}
       />
       <VoteModelDialog
         open={openVoteDialog()}
-        modelCid={props.model.ipfsCid}
+        modelCid={m().ipfsCid}
         onClose={() => setOpenVoteDialog(false)}
       />
       <CardHeader
@@ -161,18 +142,15 @@ export default function PollInfo(props: { model: ModelView }) {
               color="secondary"
               sx={{ textTransform: "none" }}
               disabled={model.loading}
-              onClick={() => model()?.save(`weights://${props.model.ipfsCid}`)}
+              onClick={() => model()?.save(`weights://${m().ipfsCid}`)}
             >
-              <Typography variant="h6">{props.model.ipfsCid}</Typography>
+              <Typography variant="h6">{m().ipfsCid}</Typography>
             </Button>
-            <CopyBtn value={props.model.ipfsCid} />
+            <CopyBtn value={m().ipfsCid} />
           </>
         }
         action={
-          <Show
-            when={!props.model.isAccepted}
-            fallback={<Alert>Accepted</Alert>}
-          >
+          <Show when={!m().isAccepted} fallback={<Alert>Accepted</Alert>}>
             <OnHoverPopover content="Participation or Accept rate have not reached the required">
               <Alert severity="info">Not Accepted Yet</Alert>
             </OnHoverPopover>
@@ -199,7 +177,7 @@ export default function PollInfo(props: { model: ModelView }) {
             <Chip
               color="info"
               icon={<AccountBalanceWallet />}
-              label={props.model.owner}
+              label={m().owner}
               variant="outlined"
             />
           </OnHoverPopover>
@@ -241,9 +219,7 @@ export default function PollInfo(props: { model: ModelView }) {
           Evaluate
         </Button>
         <Show
-          when={
-            props.model.voter.includes(address()!) || props.model.isAccepted
-          }
+          when={m().voter.includes(address()!) || m().isAccepted}
           fallback={
             <Button
               variant="outlined"
@@ -256,7 +232,7 @@ export default function PollInfo(props: { model: ModelView }) {
         >
           <OnHoverPopover
             content={
-              props.model.isAccepted
+              m().isAccepted
                 ? "Model has been accepted"
                 : "You voted for this model"
             }
