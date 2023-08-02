@@ -1,7 +1,6 @@
 import { createResource } from "solid-js";
-import { loadStorage } from "../services/contract-service";
+import { loadStorage } from "../services/io-service";
 
+const [storage, { refetch }] = createResource(() => loadStorage());
 
-const [storage, {refetch}] = createResource(() => loadStorage());
-
-export {storage, refetch as refetchStorage}
+export { refetch as refetchStorage, storage };

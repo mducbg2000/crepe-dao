@@ -1,9 +1,11 @@
 import { TezosToolkit } from "@taquito/taquito";
 import appConfig from "../config";
-import { DaoState, DaoStateRaw, toDaoState } from "./serialized-service";
 
 export const tezosClient = new TezosToolkit(appConfig.VITE_TEZOS_ENDPOINT);
-const contractLoader = tezosClient.contract.at(appConfig.VITE_CONTRACT_ADDRESS);
+export const contractLoader = tezosClient.contract.at(
+  appConfig.VITE_CONTRACT_ADDRESS,
+);
+export type VoteValue = "accept" | "reject" | "abstain";
 
 export const addLocalModel = async (
   modelCid: string,
@@ -17,7 +19,7 @@ export const addLocalModel = async (
   return op.confirmation();
 };
 
-export type VoteValue = "accept" | "reject" | "abstain";
+
 export const vote = async (modelCid: string, opinion: VoteValue) => {
   const valueOf = (o: VoteValue) => {
     if (o === "reject") return 0;
@@ -27,10 +29,4 @@ export const vote = async (modelCid: string, opinion: VoteValue) => {
   const contract = await contractLoader;
   const op = await contract.methods["vote"]!(modelCid, valueOf(opinion)).send();
   return op.confirmation();
-};
-
-export const loadStorage = async (): Promise<DaoState> => {
-  const contract = await contractLoader;
-  const storage: DaoStateRaw = await contract.storage();
-  return toDaoState(storage);
 };

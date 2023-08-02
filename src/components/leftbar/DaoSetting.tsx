@@ -10,7 +10,6 @@ import {
 import { Show } from "solid-js";
 import { address } from "../../global/account";
 import { storage } from "../../global/contract-storage";
-import { getPoint } from "../../services/extract-storage-service";
 import OnHoverPopover from "../utils/OnHoverPopover";
 
 export default function DaoSetting() {
@@ -37,7 +36,7 @@ export default function DaoSetting() {
       >
         <ListItem
           dense
-          secondaryAction={getPoint(storage()!, address()!) || "0"}
+          secondaryAction={storage()!.member.get(address()!) ?? "0"}
         >
           <ListItemText
             primary={<Typography variant="overline">Your Point:</Typography>}

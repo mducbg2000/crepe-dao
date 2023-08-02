@@ -7,7 +7,7 @@ interface IpfsAddFileResult {
   Size: string;
 }
 
-export async function addFile(file: File) {
+export const addFile = async (file: File) => {
   const form = new FormData();
   form.append("file", file);
   const response = await axios.postForm(
@@ -25,14 +25,14 @@ export async function addFile(file: File) {
     },
   );
   return (response.data as IpfsAddFileResult).Hash;
-}
+};
 
-export async function retrieveFile(
+export const retrieveFile = async (
   cid: string,
   responseType: ResponseType = "arraybuffer",
-) {
+) => {
   const response = await axios.get(`https://dweb.link/ipfs/${cid}`, {
     responseType: responseType,
   });
   return response.data;
-}
+};

@@ -7,22 +7,20 @@
           (nat %min_models)
           (nat %reward_point)
           (nat %current_round)
-          (map %member address nat)
-          (map %pool
+          (map %member address (pair (nat %point) (nat %withdrew)))
+          (map %model
              string
-             (pair (nat %nbsamples) (address %owner) (nat %round) (bool %accepted)))
-          (map %poll
-             string
-             (pair (nat %accept_point)
+             (pair (nat %nbsamples)
+                   (address %owner)
+                   (nat %round)
+                   (bool %accepted)
+                   (nat %accept_point)
                    (nat %reject_point)
                    (nat %abstain_point)
                    (set %voter address)))) ;
   parameter
-    (or (or (pair %add_local_model (string %model_cid) (nat %number_of_samples))
-            (unit %finish_round))
-        (pair %vote
-           (string %model_cid)
-           (or %value (unit %ACCEPT) (or (unit %REJECT) (unit %ABSTAIN))))) ;
+    (or (pair %contribute (string %model_cid) (nat %number_of_samples))
+        (pair %vote (string %model_cid) (int %value))) ;
   code { LAMBDA
            (pair (pair (pair int nat) (pair int nat)) (or unit (or (or unit unit) (or unit unit))))
            bool
@@ -42,9 +40,13 @@
                    { IF_LEFT { DROP 1 ; LT } { DROP 1 ; LE } }
                    { IF_LEFT { DROP 1 ; GT } { DROP 1 ; GE } } } } ;
          LAMBDA
-           (pair (map address nat)
+           (pair (map address (pair (nat %point) (nat %withdrew)))
                  (map string
-                      (pair (nat %accept_point)
+                      (pair (nat %nbsamples)
+                            (address %owner)
+                            (nat %round)
+                            (bool %accepted)
+                            (nat %accept_point)
                             (nat %reject_point)
                             (nat %abstain_point)
                             (set %voter address)))
@@ -56,8 +58,12 @@
              DUP 5 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CDR ;
              CDR ;
              CAR ;
@@ -65,16 +71,24 @@
              DUP 6 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CDR ;
              CAR ;
              DUP 5 ;
              DUP 7 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CAR ;
              ADD ;
              ADD ;
@@ -82,6 +96,7 @@
              DUP 4 ;
              ITER { UNPAIR ;
                     DUP 2 ;
+                    GET 1 ;
                     DUP 4 ;
                     ADD ;
                     DIP 1 { DIG 2 ; DROP 1 } ;
@@ -124,7 +139,11 @@
              DROP 3 } ;
          LAMBDA
            (pair (map string
-                      (pair (nat %accept_point)
+                      (pair (nat %nbsamples)
+                            (address %owner)
+                            (nat %round)
+                            (bool %accepted)
+                            (nat %accept_point)
                             (nat %reject_point)
                             (nat %abstain_point)
                             (set %voter address)))
@@ -137,16 +156,24 @@
              DUP 5 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CDR ;
              CAR ;
              DUP 4 ;
              DUP 6 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CAR ;
              ADD ;
              INT ;
@@ -156,8 +183,12 @@
              DUP 6 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CAR ;
              INT ;
              PAIR ;
@@ -190,16 +221,24 @@
          LAMBDA
            (pair (pair int nat)
                  (pair int nat)
-                 (map address nat)
+                 (map address (pair (nat %point) (nat %withdrew)))
                  (map string
-                      (pair (nat %accept_point)
+                      (pair (nat %nbsamples)
+                            (address %owner)
+                            (nat %round)
+                            (bool %accepted)
+                            (nat %accept_point)
                             (nat %reject_point)
                             (nat %abstain_point)
                             (set %voter address)))
                  string
                  (lambda
                     (pair (map string
-                               (pair (nat %accept_point)
+                               (pair (nat %nbsamples)
+                                     (address %owner)
+                                     (nat %round)
+                                     (bool %accepted)
+                                     (nat %accept_point)
                                      (nat %reject_point)
                                      (nat %abstain_point)
                                      (set %voter address)))
@@ -209,9 +248,13 @@
                     (pair (pair (pair int nat) (pair int nat)) (or unit (or (or unit unit) (or unit unit))))
                     bool)
                  (lambda
-                    (pair (map address nat)
+                    (pair (map address (pair (nat %point) (nat %withdrew)))
                           (map string
-                               (pair (nat %accept_point)
+                               (pair (nat %nbsamples)
+                                     (address %owner)
+                                     (nat %round)
+                                     (bool %accepted)
+                                     (nat %accept_point)
                                      (nat %reject_point)
                                      (nat %abstain_point)
                                      (set %voter address)))
@@ -259,203 +302,110 @@
              DROP 1 ;
              DUG 8 ;
              DROP 8 } ;
-         NIL operation ;
-         DIG 5 ;
+         DIG 4 ;
          UNPAIR ;
-         DIP 1 { UNPAIR 11 } ;
+         DIP 1 { UNPAIR 10 } ;
          IF_LEFT
-           { IF_LEFT
-               { UNPAIR ;
-                 SWAP ;
-                 DUP 12 ;
-                 DUP 3 ;
-                 MEM ;
-                 IF { PUSH string "MODEL_ALREADY_EXIST" ; FAILWITH } {} ;
-                 PUSH nat 0 ;
-                 NIL string ;
-                 NIL string ;
-                 DUP 15 ;
-                 ITER { UNPAIR ;
-                        SOURCE ;
-                        DUP 3 ;
-                        GET 3 ;
-                        COMPARE ;
-                        EQ ;
-                        IF { DUP 15 ;
-                             DUP 3 ;
-                             GET 5 ;
-                             COMPARE ;
-                             EQ ;
-                             IF { PUSH bool True } { PUSH bool False } }
-                           { PUSH bool False } ;
-                        IF { DUP 3 ; DUP 2 ; CONS } { DUP 3 } ;
-                        DIP 1 { DIG 2 ; DROP 1 } ;
-                        DUG 2 ;
-                        DROP 2 } ;
-                 ITER { CONS } ;
-                 SIZE ;
-                 COMPARE ;
-                 GT ;
-                 IF { PUSH string "ADDED_IN_CURRENT_ROUND" ; FAILWITH } {} ;
-                 DUP 12 ;
-                 DUP 3 ;
-                 MEM ;
-                 IF { PUSH string "pool" ; PUSH string "KEY_EXISTS" ; PAIR ; FAILWITH }
-                    { DUP 12 ;
-                      PUSH bool False ;
-                      DUP 12 ;
-                      PAIR ;
-                      SOURCE ;
-                      PAIR ;
-                      DUP 3 ;
-                      PAIR ;
-                      SOME ;
-                      DUP 4 ;
-                      UPDATE ;
-                      DIP 1 { DIG 11 ; DROP 1 } ;
-                      DUG 11 } ;
-                 DUP 11 ;
-                 SOURCE ;
-                 MEM ;
-                 NOT ;
-                 IF { DUP 11 ;
-                      SOURCE ;
-                      MEM ;
-                      IF { PUSH string "member" ; PUSH string "KEY_EXISTS" ; PAIR ; FAILWITH }
-                         { DUP 11 ;
-                           PUSH nat 1 ;
-                           SOME ;
-                           SOURCE ;
-                           UPDATE ;
-                           DIP 1 { DIG 10 ; DROP 1 } ;
-                           DUG 10 } }
+           { UNPAIR ;
+             SWAP ;
+             DUP 12 ;
+             DUP 3 ;
+             MEM ;
+             IF { PUSH string "MODEL_ALREADY_EXIST" ; FAILWITH } {} ;
+             PUSH nat 0 ;
+             NIL string ;
+             NIL string ;
+             DUP 15 ;
+             ITER { UNPAIR ;
+                    SOURCE ;
+                    DUP 3 ;
+                    GET 3 ;
+                    COMPARE ;
+                    EQ ;
+                    IF { DUP 15 ;
+                         DUP 3 ;
+                         GET 5 ;
+                         COMPARE ;
+                         EQ ;
+                         IF { PUSH bool True } { PUSH bool False } }
+                       { PUSH bool False } ;
+                    IF { DUP 3 ; DUP 2 ; CONS } { DUP 3 } ;
+                    DIP 1 { DIG 2 ; DROP 1 } ;
+                    DUG 2 ;
+                    DROP 2 } ;
+             ITER { CONS } ;
+             SIZE ;
+             COMPARE ;
+             GT ;
+             IF { PUSH string "CONTRIBUTED_IN_CURRENT_ROUND" ; FAILWITH } {} ;
+             DUP 11 ;
+             SOURCE ;
+             MEM ;
+             NOT ;
+             IF { DUP 11 ;
+                  SOURCE ;
+                  MEM ;
+                  IF { PUSH string "member" ; PUSH string "KEY_EXISTS" ; PAIR ; FAILWITH }
+                     { DUP 11 ;
+                       PUSH nat 0 ;
+                       PUSH nat 1 ;
+                       PAIR ;
+                       SOME ;
+                       SOURCE ;
+                       UPDATE ;
+                       DIP 1 { DIG 10 ; DROP 1 } ;
+                       DUG 10 } }
+                {} ;
+             DUP 12 ;
+             DUP 3 ;
+             MEM ;
+             IF { PUSH string "model" ; PUSH string "KEY_EXISTS" ; PAIR ; FAILWITH }
+                { DUP 12 ;
+                  EMPTY_SET address ;
+                  PUSH bool True ;
+                  SOURCE ;
+                  UPDATE ;
+                  PUSH nat 0 ;
+                  PAIR ;
+                  PUSH nat 0 ;
+                  PAIR ;
+                  DUP 13 ;
+                  SOURCE ;
+                  GET ;
+                  IF_NONE
+                    { PUSH string "member" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                     {} ;
-                 DUP 13 ;
-                 DUP 3 ;
-                 MEM ;
-                 IF { PUSH string "poll" ; PUSH string "KEY_EXISTS" ; PAIR ; FAILWITH }
-                    { DUP 13 ;
-                      EMPTY_SET address ;
-                      PUSH bool True ;
-                      SOURCE ;
-                      UPDATE ;
-                      PUSH nat 0 ;
-                      PAIR ;
-                      PUSH nat 0 ;
-                      PAIR ;
-                      DUP 13 ;
-                      SOURCE ;
-                      GET ;
-                      IF_NONE
-                        { PUSH string "member" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                        {} ;
-                      PAIR ;
-                      SOME ;
-                      DUP 4 ;
-                      UPDATE ;
-                      DIP 1 { DIG 12 ; DROP 1 } ;
-                      DUG 12 } ;
-                 NIL operation ;
-                 NIL operation ;
-                 DUP 16 ;
-                 ITER { CONS } ;
-                 NOW ;
-                 DUP 13 ;
-                 PAIR ;
-                 DUP 4 ;
-                 PAIR ;
-                 DUP 5 ;
-                 PAIR ;
-                 EMIT %NewLocalModel
-                   (pair (string %cid) (nat %num_samples) (nat %round_id) (timestamp %added_time)) ;
-                 CONS ;
-                 ITER { CONS } ;
-                 DIP 1 { DIG 13 ; DROP 1 } ;
-                 DUG 13 ;
-                 DROP 2 ;
-                 PAIR 11 ;
-                 SWAP ;
-                 PAIR }
-               { DROP 1 ;
-                 SELF_ADDRESS ;
-                 SENDER ;
-                 COMPARE ;
-                 EQ ;
-                 NOT ;
-                 IF { PUSH string "INVALID_CALLER" ; FAILWITH } {} ;
-                 NIL string ;
-                 NIL string ;
-                 DUP 12 ;
-                 ITER { UNPAIR ;
-                        DUP 12 ;
-                        DUP 3 ;
-                        GET 5 ;
-                        COMPARE ;
-                        EQ ;
-                        IF { DUP 2 ; GET 6 ; IF { PUSH bool True } { PUSH bool False } }
-                           { PUSH bool False } ;
-                        IF { DUP 3 ; DUP 2 ; CONS } { DUP 3 } ;
-                        DIP 1 { DIG 2 ; DROP 1 } ;
-                        DUG 2 ;
-                        DROP 2 } ;
-                 ITER { CONS } ;
-                 DUP ;
-                 ITER { DUP 12 ;
-                        DUP 2 ;
-                        GET ;
-                        IF_NONE
-                          { PUSH string "pool" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                          {} ;
-                        CDR ;
-                        CAR ;
-                        DUP 12 ;
-                        DUP 2 ;
-                        GET ;
-                        IF_NONE
-                          { PUSH string "member" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                          {} ;
-                        DUP 13 ;
-                        DUP 12 ;
-                        DUP 3 ;
-                        ADD ;
-                        SOME ;
-                        DUP 4 ;
-                        UPDATE ;
-                        DIP 1 { DIG 12 ; DROP 1 } ;
-                        DUG 12 ;
-                        DROP 3 } ;
-                 NIL operation ;
-                 NIL operation ;
-                 DUP 15 ;
-                 ITER { CONS } ;
-                 NOW ;
-                 DUP 12 ;
-                 PAIR ;
-                 EMIT %FinishRound (pair (nat %last_round) (timestamp %finished_time)) ;
-                 CONS ;
-                 ITER { CONS } ;
-                 DIP 1 { DIG 12 ; DROP 1 } ;
-                 DUG 12 ;
-                 PUSH nat 1 ;
-                 DUP 10 ;
-                 ADD ;
-                 DIP 1 { DIG 8 ; DROP 1 } ;
-                 DUG 8 ;
-                 DROP 1 ;
-                 PAIR 11 ;
-                 SWAP ;
-                 PAIR } }
+                  CAR ;
+                  PAIR ;
+                  PUSH bool False ;
+                  PAIR ;
+                  DUP 12 ;
+                  PAIR ;
+                  SOURCE ;
+                  PAIR ;
+                  DUP 3 ;
+                  PAIR ;
+                  SOME ;
+                  DUP 4 ;
+                  UPDATE ;
+                  DIP 1 { DIG 11 ; DROP 1 } ;
+                  DUG 11 } ;
+             DROP 2 ;
+             PAIR 10 ;
+             NIL operation ;
+             PAIR }
            { UNPAIR ;
              SWAP ;
              DUP 12 ;
              DUP 3 ;
              GET ;
              IF_NONE
-               { PUSH string "pool" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
              CDR ;
              CDR ;
              CDR ;
+             CAR ;
              NOT ;
              IF { PUSH bool True }
                 { DUP 10 ;
@@ -463,7 +413,7 @@
                   DUP 4 ;
                   GET ;
                   IF_NONE
-                    { PUSH string "pool" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                    { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                     {} ;
                   CDR ;
                   CDR ;
@@ -478,12 +428,16 @@
              MEM ;
              NOT ;
              IF { PUSH string "ONLY_MEMBER_CAN_VOTE" ; FAILWITH } {} ;
-             DUP 13 ;
+             DUP 12 ;
              DUP 3 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CDR ;
              CDR ;
              CDR ;
@@ -496,13 +450,22 @@
              IF_NONE
                { PUSH string "member" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CAR ;
+             DUP 13 ;
              DUP 14 ;
-             DUP 15 ;
              DUP 5 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             UNPAIR ;
+             SWAP ;
+             UNPAIR ;
+             SWAP ;
+             UNPAIR ;
+             SWAP ;
+             UNPAIR ;
+             SWAP ;
              UNPAIR ;
              SWAP ;
              UNPAIR ;
@@ -510,12 +473,16 @@
              UNPAIR ;
              SWAP ;
              DROP 1 ;
-             DUP 18 ;
-             DUP 8 ;
+             DUP 21 ;
+             DUP 12 ;
              GET ;
              IF_NONE
-               { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+               { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                {} ;
+             CDR ;
+             CDR ;
+             CDR ;
+             CDR ;
              CDR ;
              CDR ;
              CDR ;
@@ -528,112 +495,173 @@
              PAIR ;
              SWAP ;
              PAIR ;
+             SWAP ;
+             PAIR ;
+             SWAP ;
+             PAIR ;
+             SWAP ;
+             PAIR ;
+             SWAP ;
+             PAIR ;
              SOME ;
              DUP 5 ;
              UPDATE ;
-             DIP 1 { DIG 13 ; DROP 1 } ;
-             DUG 13 ;
+             DIP 1 { DIG 12 ; DROP 1 } ;
+             DUG 12 ;
              DUP 2 ;
-             IF_LEFT
-               { DUP 15 ;
-                 DUP 5 ;
-                 GET ;
-                 IF_NONE
-                   { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                   {} ;
-                 DUP 16 ;
-                 DUP 17 ;
-                 DUP 7 ;
-                 GET ;
-                 IF_NONE
-                   { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                   {} ;
-                 CDR ;
-                 DUP 5 ;
-                 DUP 4 ;
-                 GET 1 ;
-                 ADD ;
-                 PAIR ;
-                 SOME ;
-                 DUP 7 ;
-                 UPDATE ;
-                 DIP 1 { DIG 15 ; DROP 1 } ;
-                 DUG 15 ;
-                 DROP 2 }
-               { DUP ;
-                 IF_LEFT
-                   { DUP 16 ;
-                     DUP 6 ;
-                     GET ;
-                     IF_NONE
-                       { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                       {} ;
-                     DUP 17 ;
-                     DUP 18 ;
-                     DUP 8 ;
-                     GET ;
-                     IF_NONE
-                       { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                       {} ;
-                     UNPAIR ;
-                     SWAP ;
-                     CDR ;
-                     DUP 7 ;
-                     DUP 5 ;
-                     GET 3 ;
-                     ADD ;
-                     PAIR ;
-                     SWAP ;
-                     PAIR ;
-                     SOME ;
-                     DUP 8 ;
-                     UPDATE ;
-                     DIP 1 { DIG 16 ; DROP 1 } ;
-                     DUG 16 ;
-                     DROP 2 }
-                   { DUP 16 ;
-                     DUP 6 ;
-                     GET ;
-                     IF_NONE
-                       { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                       {} ;
-                     DUP 17 ;
-                     DUP 18 ;
-                     DUP 8 ;
-                     GET ;
-                     IF_NONE
-                       { PUSH string "poll" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
-                       {} ;
-                     UNPAIR ;
-                     SWAP ;
-                     UNPAIR ;
-                     SWAP ;
-                     CDR ;
-                     DUP 8 ;
-                     DUP 6 ;
-                     GET 5 ;
-                     ADD ;
-                     PAIR ;
-                     SWAP ;
-                     PAIR ;
-                     SWAP ;
-                     PAIR ;
-                     SOME ;
-                     DUP 8 ;
-                     UPDATE ;
-                     DIP 1 { DIG 16 ; DROP 1 } ;
-                     DUG 16 ;
-                     DROP 2 } ;
-                 DROP 1 } ;
-             DUP 16 ;
+             DUP ;
+             PUSH int 0 ;
+             COMPARE ;
+             EQ ;
+             IF { DUP 14 ;
+                  DUP 5 ;
+                  GET ;
+                  IF_NONE
+                    { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                    {} ;
+                  DUP 15 ;
+                  DUP 16 ;
+                  DUP 7 ;
+                  GET ;
+                  IF_NONE
+                    { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                    {} ;
+                  UNPAIR ;
+                  SWAP ;
+                  UNPAIR ;
+                  SWAP ;
+                  UNPAIR ;
+                  SWAP ;
+                  UNPAIR ;
+                  SWAP ;
+                  UNPAIR ;
+                  SWAP ;
+                  CDR ;
+                  DUP 10 ;
+                  DUP 9 ;
+                  GET 11 ;
+                  ADD ;
+                  PAIR ;
+                  SWAP ;
+                  PAIR ;
+                  SWAP ;
+                  PAIR ;
+                  SWAP ;
+                  PAIR ;
+                  SWAP ;
+                  PAIR ;
+                  SWAP ;
+                  PAIR ;
+                  SOME ;
+                  DUP 7 ;
+                  UPDATE ;
+                  DIP 1 { DIG 14 ; DROP 1 } ;
+                  DUG 14 ;
+                  DROP 1 }
+                { DUP ;
+                  PUSH int 1 ;
+                  COMPARE ;
+                  EQ ;
+                  IF { DUP 14 ;
+                       DUP 5 ;
+                       GET ;
+                       IF_NONE
+                         { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                         {} ;
+                       DUP 15 ;
+                       DUP 16 ;
+                       DUP 7 ;
+                       GET ;
+                       IF_NONE
+                         { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                         {} ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       CDR ;
+                       DUP 9 ;
+                       DUP 8 ;
+                       GET 9 ;
+                       ADD ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SOME ;
+                       DUP 7 ;
+                       UPDATE ;
+                       DIP 1 { DIG 14 ; DROP 1 } ;
+                       DUG 14 ;
+                       DROP 1 }
+                     { DUP 14 ;
+                       DUP 5 ;
+                       GET ;
+                       IF_NONE
+                         { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                         {} ;
+                       DUP 15 ;
+                       DUP 16 ;
+                       DUP 7 ;
+                       GET ;
+                       IF_NONE
+                         { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                         {} ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       UNPAIR ;
+                       SWAP ;
+                       CDR ;
+                       DUP 11 ;
+                       DUP 10 ;
+                       GET 13 ;
+                       ADD ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SWAP ;
+                       PAIR ;
+                       SOME ;
+                       DUP 7 ;
+                       UPDATE ;
+                       DIP 1 { DIG 14 ; DROP 1 } ;
+                       DUG 14 ;
+                       DROP 1 } } ;
+             DROP 1 ;
+             DUP 14 ;
+             DUP 17 ;
              DUP 19 ;
-             DUP 21 ;
              PAIR ;
-             DUP 19 ;
+             DUP 17 ;
              PAIR ;
              DUP 5 ;
              PAIR ;
-             DUP 16 ;
+             DUP 15 ;
              PAIR ;
              DUP 14 ;
              PAIR ;
@@ -647,7 +675,7 @@
                   DUP 5 ;
                   GET ;
                   IF_NONE
-                    { PUSH string "pool" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                    { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
                     {} ;
                   UNPAIR ;
                   SWAP ;
@@ -655,8 +683,9 @@
                   SWAP ;
                   UNPAIR ;
                   SWAP ;
-                  DROP 1 ;
+                  CDR ;
                   PUSH bool True ;
+                  PAIR ;
                   SWAP ;
                   PAIR ;
                   SWAP ;
@@ -678,7 +707,7 @@
                     GET 5 ;
                     COMPARE ;
                     EQ ;
-                    IF { DUP 2 ; GET 6 ; IF { PUSH bool True } { PUSH bool False } }
+                    IF { DUP 2 ; GET 7 ; IF { PUSH bool True } { PUSH bool False } }
                        { PUSH bool False } ;
                     IF { DUP 3 ; DUP 2 ; CONS } { DUP 3 } ;
                     DIP 1 { DIG 2 ; DROP 1 } ;
@@ -720,25 +749,65 @@
              INT ;
              COMPARE ;
              GE ;
-             IF { NIL operation ;
-                  NIL operation ;
-                  DUP 19 ;
+             IF { NIL string ;
+                  NIL string ;
+                  DUP 17 ;
+                  ITER { UNPAIR ;
+                         DUP 17 ;
+                         DUP 3 ;
+                         GET 5 ;
+                         COMPARE ;
+                         EQ ;
+                         IF { DUP 2 ; GET 7 ; IF { PUSH bool True } { PUSH bool False } }
+                            { PUSH bool False } ;
+                         IF { DUP 3 ; DUP 2 ; CONS } { DUP 3 } ;
+                         DIP 1 { DIG 2 ; DROP 1 } ;
+                         DUG 2 ;
+                         DROP 2 } ;
                   ITER { CONS } ;
-                  SELF_ADDRESS ;
-                  CONTRACT %finish_round unit ;
-                  IF_NONE
-                    { PUSH string "finish_round" ; PUSH string "ENTRY_NOT_FOUND" ; PAIR ; FAILWITH }
-                    {} ;
-                  PUSH mutez 0 ;
-                  UNIT ;
-                  TRANSFER_TOKENS ;
-                  CONS ;
-                  ITER { CONS } ;
-                  DIP 1 { DIG 16 ; DROP 1 } ;
-                  DUG 16 }
+                  DUP ;
+                  ITER { DUP 17 ;
+                         DUP 2 ;
+                         GET ;
+                         IF_NONE
+                           { PUSH string "model" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                           {} ;
+                         CDR ;
+                         CAR ;
+                         DUP 17 ;
+                         DUP 2 ;
+                         GET ;
+                         IF_NONE
+                           { PUSH string "member" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                           {} ;
+                         DUP 18 ;
+                         DUP 19 ;
+                         DUP 4 ;
+                         GET ;
+                         IF_NONE
+                           { PUSH string "member" ; PUSH string "ASSET_NOT_FOUND" ; PAIR ; FAILWITH }
+                           {} ;
+                         CDR ;
+                         DUP 18 ;
+                         DUP 4 ;
+                         GET 1 ;
+                         ADD ;
+                         PAIR ;
+                         SOME ;
+                         DUP 4 ;
+                         UPDATE ;
+                         DIP 1 { DIG 17 ; DROP 1 } ;
+                         DUG 17 ;
+                         DROP 3 } ;
+                  PUSH nat 1 ;
+                  DUP 15 ;
+                  ADD ;
+                  DIP 1 { DIG 13 ; DROP 1 } ;
+                  DUG 13 ;
+                  DROP 1 }
                 {} ;
              DROP 5 ;
-             PAIR 11 ;
-             SWAP ;
+             PAIR 10 ;
+             NIL operation ;
              PAIR } ;
          DIP 1 { DROP 4 } } }

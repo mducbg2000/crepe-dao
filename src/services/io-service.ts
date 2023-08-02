@@ -1,10 +1,15 @@
 import * as tf from "@tensorflow/tfjs";
-import fedAvg, { ModelUpdate } from "./ai-service";
-import { getLastestAcceptedModels } from "./extract-storage-service";
+import { getLastestAcceptedModels } from "../utils/extract-models-utils";
+import {
+  DaoState,
+  DaoStateRaw,
+  toDaoState,
+} from "../utils/serialized-storage-utils";
+import { fedAvg, ModelUpdate } from "./ai-service";
+import { contractLoader } from "./contract-service";
 import { retrieveFile } from "./ipfs-service";
-import { DaoState } from "./serialized-service";
 
-export async function loadModel(modelTopoCid: string, weightsCid: string) {
+export const loadModel = async (modelTopoCid: string, weightsCid: string) => {
   const getWeightsData = async (
     weightsManifest: tf.io.WeightsManifestConfig,
     weightsCid: string,
@@ -30,7 +35,7 @@ export async function loadModel(modelTopoCid: string, weightsCid: string) {
     loss: tf.metrics.meanSquaredError,
   });
   return model;
-}
+};
 
 type CsvRow = {
   xs: {
@@ -41,7 +46,7 @@ type CsvRow = {
   };
 };
 
-export async function getFeaturesAndLabels(csvFile: File) {
+export const getFeaturesAndLabels = async (csvFile: File) => {
   const csvDataset = new tf.data.CSVDataset(
     new tf.data.FileDataSource(csvFile),
     {
@@ -87,9 +92,9 @@ export async function getFeaturesAndLabels(csvFile: File) {
   const features = x.reshape([...x.shape, 1]);
   const labels = tf.tensor(yRaw);
   return { features, labels };
-}
+};
 
-export async function getLastestGlobalModel(s: DaoState) {
+export const getLastestGlobalModel = async (s: DaoState) => {
   const lastestAcceptedModels = getLastestAcceptedModels(s);
   return lastestAcceptedModels.length === 0
     ? await loadModel(s.modelTopoCid, s.initWeightsCid)
@@ -104,4 +109,10 @@ export async function getLastestGlobalModel(s: DaoState) {
           }),
         ),
       );
-}
+};
+
+export const loadStorage = async (): Promise<DaoState> => {
+  const contract = await contractLoader;
+  const storage: DaoStateRaw = await contract.storage();
+  return toDaoState(storage);
+};

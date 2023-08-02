@@ -25,11 +25,8 @@ import BigNumber from "bignumber.js";
 import { For, Show, createResource, createSignal } from "solid-js";
 import { address } from "../global/account";
 import { storage } from "../global/contract-storage";
-import {
-  getTotalPoint,
-  type ModelView,
-} from "../services/extract-storage-service";
 import { loadModel } from "../services/io-service";
+import { type ModelView } from "../utils/extract-models-utils";
 import CopyBtn from "./utils/CopyBtn";
 import EvaluateModelDialog from "./utils/EvaluateModelDialog";
 import OnHoverPopover from "./utils/OnHoverPopover";
@@ -37,7 +34,7 @@ import VoteModelDialog from "./utils/VoteModelDialog";
 
 export default function PollInfo(props: { model: ModelView }) {
   const m = () => props.model;
-  const total = () => getTotalPoint(storage()!);
+  const total = () => [...storage()!.member.values()].reduce((a, b) => a + b);
   const participationRate = () =>
     ((m().acceptPoint + m().rejectPoint + m().abstainPoint) / total()) * 100;
   const voteResultsDetail = (): Array<{
@@ -65,9 +62,9 @@ export default function PollInfo(props: { model: ModelView }) {
       label: "Abstain",
       value: (m().abstainPoint / total()) * 100,
       color: "warning",
-      description: `${m().abstainPoint} / ${getTotalPoint(
-        storage()!,
-      )} (${Math.round((m().abstainPoint / total()) * 100)}%)`,
+      description: `${m().abstainPoint} / ${total()} (${Math.round(
+        (m().abstainPoint / total()) * 100,
+      )}%)`,
     },
   ];
   const voteResult = (): Array<{
@@ -83,7 +80,7 @@ export default function PollInfo(props: { model: ModelView }) {
       description: `(${m().acceptPoint} +
           ${m().rejectPoint} +
           ${m().abstainPoint}) /
-        ${getTotalPoint(storage()!)} (${Math.round(participationRate())}%)`,
+        ${total()} (${Math.round(participationRate())}%)`,
     },
     {
       label: "Accept Rate",

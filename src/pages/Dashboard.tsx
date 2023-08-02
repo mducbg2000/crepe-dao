@@ -13,7 +13,7 @@ import LeftBar from "../components/LeftBar";
 import PollInfo from "../components/PollInfo";
 import TopBar from "../components/TopBar";
 import { storage } from "../global/contract-storage";
-import { getModelsInCurrentRound } from "../services/extract-storage-service";
+import { getModelsInCurrentRound } from "../utils/extract-models-utils";
 
 export default function Dashboard() {
   return (
