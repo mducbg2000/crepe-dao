@@ -1,58 +1,26 @@
 import { MichelsonMap } from "@taquito/taquito";
 import BigNumber from "bignumber.js";
 
-interface PoolValueRaw {
+interface ModelInfoRaw {
+  topo_cid: string;
+  weights_cid: string;
   nbsamples: BigNumber;
   owner: string;
   round: BigNumber;
   accepted: boolean;
-}
-
-interface PollValueRaw {
   accept_point: BigNumber;
   reject_point: BigNumber;
   abstain_point: BigNumber;
-  voter: string[];
+  voters: string[];
 }
 
-const toPoolValue = (p: PoolValueRaw) => ({
-  nbsamples: p.nbsamples.toNumber(),
-  owner: p.owner,
-  round: p.round.toNumber(),
-  accepted: p.accepted,
-});
-
-const toPollValue = (p: PollValueRaw) => ({
-  accept_point: p.accept_point.toNumber(),
-  reject_point: p.reject_point.toNumber(),
-  abstain_point: p.abstain_point.toNumber(),
-  voter: p.voter,
-});
-
-type PoolValue = ReturnType<typeof toPoolValue>;
-type PollValue = ReturnType<typeof toPollValue>;
-
-const memberToMap = (m: MichelsonMap<string, BigNumber>) =>
-  new Map(
-    [...m.entries()].map((e) => [e[0], e[1].toNumber()] as [string, number]),
-  );
-
-const poolToMap = (p: MichelsonMap<string, PoolValueRaw>) =>
-  new Map(
-    [...p.entries()].map(
-      (e) => [e[0], toPoolValue(e[1])] as [string, PoolValue],
-    ),
-  );
-
-const pollToMap = (p: MichelsonMap<string, PollValueRaw>) =>
-  new Map(
-    [...p.entries()].map(
-      (e) => [e[0], toPollValue(e[1])] as [string, PollValue],
-    ),
-  );
+interface MemberInfoRaw {
+  point: BigNumber;
+  withdrew: BigNumber;
+}
 
 export interface DaoStateRaw {
-  model_topo_cid: string;
+  init_topo_cid: string;
   init_weights_cid: string;
   quorum: Record<"2" | "3", BigNumber>;
   super_majority: Record<"4" | "5", BigNumber>;
@@ -60,13 +28,42 @@ export interface DaoStateRaw {
   min_models: BigNumber;
   reward_point: BigNumber;
   current_round: BigNumber;
-  member: MichelsonMap<string, BigNumber>;
-  pool: MichelsonMap<string, PoolValueRaw>;
-  poll: MichelsonMap<string, PollValueRaw>;
+  members: MichelsonMap<string, MemberInfoRaw>;
+  models: MichelsonMap<string, ModelInfoRaw>;
 }
 
+const toModelInfo = (m: ModelInfoRaw) => ({
+  topoCID: m.topo_cid,
+  weightsCID: m.weights_cid,
+  nbsamples: m.nbsamples.toNumber(),
+  owner: m.owner,
+  round: m.round.toNumber(),
+  accepted: m.accepted,
+  acceptPoint: m.accept_point.toNumber(),
+  rejectPoint: m.reject_point.toNumber(),
+  abstainPoint: m.abstain_point.toNumber(),
+  voters: m.voters,
+});
+
+const toMemberInfo = (m: MemberInfoRaw) => ({
+  point: m.point.toNumber(),
+  withdrew: m.withdrew.toNumber(),
+});
+
+const modelsToArray = (p: DaoStateRaw["models"]) =>
+  [...p.entries()].map((e) => ({
+    id: e[0],
+    ...toModelInfo(e[1]),
+  }));
+
+const membersToArray = (p: DaoStateRaw["members"]) =>
+  [...p.entries()].map((e) => ({
+    address: e[0],
+    ...toMemberInfo(e[1]),
+  }));
+
 export const toDaoState = (r: DaoStateRaw) => ({
-  modelTopoCid: r.model_topo_cid,
+  initTopoCid: r.init_topo_cid,
   initWeightsCid: r.init_weights_cid,
   quorum: r.quorum[2].div(r.quorum[3]).decimalPlaces(4).toNumber(),
   superMajority: r.super_majority[4]
@@ -78,11 +75,10 @@ export const toDaoState = (r: DaoStateRaw) => ({
     .decimalPlaces(4)
     .toNumber(),
   minModels: r.min_models.toNumber(),
-  rewardPoint: r.reward_point.toNumber(),
   currentRound: r.current_round.toNumber(),
-  member: memberToMap(r.member),
-  pool: poolToMap(r.pool),
-  poll: pollToMap(r.poll),
+  members: membersToArray(r.members),
+  models: modelsToArray(r.models),
 });
 
 export type DaoState = ReturnType<typeof toDaoState>;
+export type ModelInfo = ReturnType<typeof toModelInfo> & { id: string };

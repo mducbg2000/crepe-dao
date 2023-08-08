@@ -5,28 +5,41 @@ import {
   ListItemText,
   Typography,
 } from "@suid/material";
-import { address } from "../../global/account";
+import { address, balance } from "../../store/account";
 import CopyBtn from "../utils/CopyBtn";
 
 export default function AccountInfo() {
   return (
-    <ListItem>
-      <ListItemIcon>
-        <AccountBalanceWallet color="info" />
-      </ListItemIcon>
-      <ListItemText
-        primary={
-          <Typography variant="button">
-            Your Address:
-            <CopyBtn value={address()} />
-          </Typography>
-        }
-        secondary={
+    <>
+      <ListItem>
+        <ListItemIcon>
+          <AccountBalanceWallet color="info" />
+        </ListItemIcon>
+        <ListItemText
+          primary={<Typography variant="button">Account Info:</Typography>}
+        />
+      </ListItem>
+      <ListItem
+        dense
+        secondaryAction={
           <Typography textOverflow="ellipsis" overflow="clip">
-            {address()}
+            {address()?.slice(0, 10) + "..."}
           </Typography>
         }
-      />
-    </ListItem>
+      >
+        <ListItemText
+          primary={
+            <Typography variant="overline">
+              Address: <CopyBtn value={address()} />
+            </Typography>
+          }
+        />
+      </ListItem>
+      <ListItem dense secondaryAction={balance() + " ꜩ"}>
+        <ListItemText
+          primary={<Typography variant="overline">Balance:</Typography>}
+        />
+      </ListItem>
+    </>
   );
 }

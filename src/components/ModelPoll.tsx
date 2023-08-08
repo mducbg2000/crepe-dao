@@ -1,7 +1,7 @@
 import {
   AccountBalanceWallet,
-  Download,
   HowToVote,
+  Poll,
   Psychology,
 } from "@suid/icons-material";
 import {
@@ -13,6 +13,7 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  CircularProgress,
   FormControlLabel,
   Stack,
   Switch,
@@ -23,20 +24,42 @@ import LinearProgress, {
 } from "@suid/material/LinearProgress";
 import BigNumber from "bignumber.js";
 import { For, Show, createResource, createSignal } from "solid-js";
-import { address } from "../global/account";
-import { storage } from "../global/contract-storage";
-import { loadModel } from "../services/io-service";
-import { type ModelView } from "../utils/extract-models-utils";
-import CopyBtn from "./utils/CopyBtn";
-import EvaluateModelDialog from "./utils/EvaluateModelDialog";
-import OnHoverPopover from "./utils/OnHoverPopover";
-import VoteModelDialog from "./utils/VoteModelDialog";
+import { getFeaturesAndLabels, getModel } from "../services/io-service";
+import { address } from "../store/account";
+import { storage } from "../store/contract";
 
-export default function PollInfo(props: { model: ModelView }) {
+import { Scalar } from "@tensorflow/tfjs";
+import { ModelInfo } from "../utils/serialized-storage-utils";
+import { setVoteCID } from "./VoteModelDialog";
+import CopyBtn from "./utils/CopyBtn";
+import { FileInput } from "./utils/FileInput";
+import OnHoverPopover from "./utils/OnHoverPopover";
+
+export default function ModelPoll(props: { model: ModelInfo }) {
   const m = () => props.model;
-  const total = () => [...storage()!.member.values()].reduce((a, b) => a + b);
+  const total = () =>
+    storage()
+      ?.members.map((m) => m.point)
+      .reduce((a, b) => a + b, 0) ?? 1;
+
+  const [datasetFile, setDatasetFile] = createSignal<File>();
+  const [showDetail, setShowDetail] = createSignal(false);
+  const [model] = createResource(async () =>
+    getModel(m().topoCID, m().weightsCID),
+  );
+  const [result] = createResource(datasetFile, async (file?: File) => {
+    if (file === undefined) return undefined;
+    try {
+      const { features, labels } = await getFeaturesAndLabels(file);
+      const loss = model()!.evaluate(features, labels) as Scalar;
+      return loss.dataSync().toString();
+    } catch (e) {
+      return (e as Error).toString();
+    }
+  });
   const participationRate = () =>
     ((m().acceptPoint + m().rejectPoint + m().abstainPoint) / total()) * 100;
+
   const voteResultsDetail = (): Array<{
     label: string;
     value: number;
@@ -89,7 +112,8 @@ export default function PollInfo(props: { model: ModelView }) {
         new BigNumber(m().acceptPoint / (m().acceptPoint + m().rejectPoint))
           .multipliedBy(100)
           .decimalPlaces(2)
-          .toNumber() < storage()!.superMajority
+          .toNumber() <
+        storage()!.superMajority * 100
           ? "info"
           : "success",
       description: `${m().acceptPoint} /
@@ -99,42 +123,30 @@ export default function PollInfo(props: { model: ModelView }) {
     },
   ];
 
-  const [showDetail, setShowDetail] = createSignal(false);
-  const [openEvaluateDialog, setOpenEvaluateDialog] = createSignal(false);
-  const [openVoteDialog, setOpenVoteDialog] = createSignal(false);
-  const [model] = createResource(async () =>
-    loadModel(storage()!.modelTopoCid, m().ipfsCid),
-  );
   return (
     <Card raised>
-      <EvaluateModelDialog
-        open={openEvaluateDialog()}
-        modelCid={m().ipfsCid}
-        model={model()!}
-        onClose={() => setOpenEvaluateDialog(false)}
-      />
-      <VoteModelDialog
-        open={openVoteDialog()}
-        modelCid={m().ipfsCid}
-        onClose={() => setOpenVoteDialog(false)}
-      />
       <CardHeader
         title={
           <>
             <Button
-              endIcon={<Download />}
+              startIcon={<Poll />}
               color="secondary"
               sx={{ textTransform: "none" }}
               disabled={model.loading}
-              onClick={() => model()?.save(`weights://${m().ipfsCid}`)}
+              onClick={() => model()!.save(`device://${m().id.slice(0, 8)}`)}
             >
-              <Typography variant="h6">{m().ipfsCid}</Typography>
+              <OnHoverPopover content="Download Model">
+                <Typography variant="h6">{`0x${m().id.slice(
+                  0,
+                  8,
+                )}...`}</Typography>
+              </OnHoverPopover>
             </Button>
-            <CopyBtn value={m().ipfsCid} />
+            <CopyBtn value={m().id} />
           </>
         }
         action={
-          <Show when={!m().isAccepted} fallback={<Alert>Accepted</Alert>}>
+          <Show when={!m().accepted} fallback={<Alert>Accepted</Alert>}>
             <OnHoverPopover content="Participation or Accept rate have not reached the required">
               <Alert severity="info">Not Accepted Yet</Alert>
             </OnHoverPopover>
@@ -190,42 +202,74 @@ export default function PollInfo(props: { model: ModelView }) {
               </Box>
             )}
           </For>
+          <Box justifyContent="space-between" displayRaw="flex">
+            <Typography variant="overline">Dataset: </Typography>
+            <Show when={datasetFile() !== undefined}>
+              <Chip
+                label={datasetFile()?.name}
+                onDelete={() => {
+                  setDatasetFile();
+                }}
+              />
+            </Show>
+          </Box>
+          <Box justifyContent="space-between" displayRaw="flex">
+            <Typography variant="overline">Mean Square Error: </Typography>
+            <Show when={datasetFile() !== undefined}>
+              <Show when={!result.loading} fallback={<CircularProgress />}>
+                <Chip label={result()} />
+              </Show>
+            </Show>
+          </Box>
         </Stack>
       </CardContent>
       <CardActions>
-        <Button
-          variant="outlined"
-          endIcon={<Psychology />}
-          sx={{ mr: 1 }}
-          onClick={() => setOpenEvaluateDialog(true)}
-          disabled={model.loading}
-        >
-          Evaluate
-        </Button>
-        <Show
-          when={m().voter.includes(address()!) || m().isAccepted}
-          fallback={
+        <Stack direction="row" spacing={2}>
+          <label for={`test-${m().id}`}>
+            <FileInput
+              accept=".csv"
+              id={`test-${m().id}`}
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files?.item(0) ?? undefined;
+                setDatasetFile(() => file);
+              }}
+            />
             <Button
+              color="primary"
+              aria-label="upload dataset"
+              component="span"
+              endIcon={<Psychology />}
               variant="outlined"
-              endIcon={<HowToVote />}
-              onClick={() => setOpenVoteDialog(true)}
             >
-              Vote
+              Evaluate
             </Button>
-          }
-        >
-          <OnHoverPopover
-            content={
-              m().isAccepted
-                ? "Model has been accepted"
-                : "You voted for this model"
+          </label>
+          <Show
+            when={m().voters.includes(address()!) || m().accepted}
+            fallback={
+              <Button
+                variant="outlined"
+                endIcon={<HowToVote />}
+                onClick={() => setVoteCID(() => m().id)}
+              >
+                Vote
+              </Button>
             }
           >
-            <Button variant="outlined" endIcon={<HowToVote />} disabled>
-              Vote
-            </Button>
-          </OnHoverPopover>
-        </Show>
+            <OnHoverPopover
+              content={
+                m().accepted
+                  ? "Model has been accepted"
+                  : "You voted for this model"
+              }
+            >
+              <Button variant="outlined" endIcon={<HowToVote />} disabled>
+                Vote
+              </Button>
+            </OnHoverPopover>
+          </Show>
+        </Stack>
       </CardActions>
     </Card>
   );

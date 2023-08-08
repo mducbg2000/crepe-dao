@@ -12,7 +12,7 @@ import { Show, createSignal } from "solid-js";
 import crepeLogo from "../assets/logo.svg";
 
 import DocumentBtn from "../components/utils/DocumentBtn";
-import { setPrivateKey, signer } from "../global/account";
+import { setPrivateKey, signer } from "../store/account";
 
 export default function LoginPage() {
   const [input, setInput] = createSignal<string>("");

@@ -10,10 +10,12 @@ import {
 } from "@suid/material";
 
 import AccountInfo from "./leftbar/AccountInfo";
-import DaoSetting from "./leftbar/DaoSetting";
+import ContractInfo from "./leftbar/ContractInfo";
+import UploadModelBtn from "./leftbar/ContributeModelBtn";
 import DownloadGlobalModelBtn from "./leftbar/DownloadGlobalModelBtn";
+import FundraiseBtn from "./leftbar/FundraiseBtn";
+import RedeemBtn from "./leftbar/RedeemBtn";
 import TrainModelBtn from "./leftbar/TrainModelBtn";
-import UploadModelBtn from "./leftbar/UploadModelBtn";
 import DocumentBtn from "./utils/DocumentBtn";
 
 export default function LeftBar() {
@@ -40,10 +42,12 @@ export default function LeftBar() {
       >
         <Stack divider={<Divider variant="middle" />}>
           <AccountInfo />
-          <DaoSetting />
+          <ContractInfo />
           <DownloadGlobalModelBtn />
           <TrainModelBtn />
           <UploadModelBtn />
+          <FundraiseBtn />
+          <RedeemBtn />
         </Stack>
         <ListItem secondaryAction={<DocumentBtn />}>
           <ListItemText

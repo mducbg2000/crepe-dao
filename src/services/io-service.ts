@@ -1,15 +1,16 @@
 import * as tf from "@tensorflow/tfjs";
+import appConfig from "../config";
 import { getLastestAcceptedModels } from "../utils/extract-models-utils";
 import {
   DaoState,
   DaoStateRaw,
   toDaoState,
 } from "../utils/serialized-storage-utils";
-import { fedAvg, ModelUpdate } from "./ai-service";
-import { contractLoader } from "./contract-service";
+import { ModelUpdate, fedAvg } from "./ai-service";
+import { contractLoader, tezosClient } from "./contract-service";
 import { retrieveFile } from "./ipfs-service";
 
-export const loadModel = async (modelTopoCid: string, weightsCid: string) => {
+export const getModel = async (modelTopoCid: string, weightsCid: string) => {
   const getWeightsData = async (
     weightsManifest: tf.io.WeightsManifestConfig,
     weightsCid: string,
@@ -46,7 +47,9 @@ type CsvRow = {
   };
 };
 
-export const getFeaturesAndLabels = async (csvFile: File) => {
+export const getFeaturesAndLabels = async (
+  csvFile: tf.data.FileDataSource["input"],
+) => {
   const csvDataset = new tf.data.CSVDataset(
     new tf.data.FileDataSource(csvFile),
     {
@@ -97,22 +100,29 @@ export const getFeaturesAndLabels = async (csvFile: File) => {
 export const getLastestGlobalModel = async (s: DaoState) => {
   const lastestAcceptedModels = getLastestAcceptedModels(s);
   return lastestAcceptedModels.length === 0
-    ? await loadModel(s.modelTopoCid, s.initWeightsCid)
+    ? await getModel(s.initTopoCid, s.initWeightsCid)
     : fedAvg(
         await Promise.all(
           lastestAcceptedModels.map(async (info) => {
-            const model = await loadModel(s.modelTopoCid, info.ipfsCid);
+            const model = await getModel(info.topoCID, info.weightsCID);
             return {
               model,
-              numSamples: info.numberOfSamples,
+              numSamples: info.nbsamples,
             } satisfies ModelUpdate;
           }),
         ),
       );
 };
 
-export const loadStorage = async (): Promise<DaoState> => {
+export const getContractStorage = async (): Promise<DaoState> => {
   const contract = await contractLoader;
   const storage: DaoStateRaw = await contract.storage();
   return toDaoState(storage);
+};
+
+export const getContractBalance = async () => {
+  const balance = await tezosClient.tz.getBalance(
+    appConfig.VITE_CONTRACT_ADDRESS,
+  );
+  return balance.div(1000000).toNumber();
 };

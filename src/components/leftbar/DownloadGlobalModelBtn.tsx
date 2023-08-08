@@ -1,4 +1,4 @@
-import { Download } from "@suid/icons-material";
+import { Save } from "@suid/icons-material";
 import {
   ListItem,
   ListItemButton,
@@ -8,21 +8,24 @@ import {
 } from "@suid/material";
 
 import { createResource } from "solid-js";
-import { storage } from "../../global/contract-storage";
 import { getLastestGlobalModel } from "../../services/io-service";
+import { storage } from "../../store/contract";
 import OnHoverPopover from "../utils/OnHoverPopover";
 
 export default function DownloadGlobalModelBtn() {
   const [globalModel] = createResource(storage, getLastestGlobalModel);
+  const saveGlobalModel = () => {
+    globalModel()!.save("device://lastest", { includeOptimizer: false });
+  };
   return (
     <OnHoverPopover content="Download lastest global model">
       <ListItem disablePadding>
         <ListItemButton
           disabled={globalModel() === undefined}
-          onClick={() => globalModel()!.save("weights://lastest")}
+          onClick={saveGlobalModel}
         >
           <ListItemIcon>
-            <Download color="info" />
+            <Save color="info" />
           </ListItemIcon>
           <ListItemText
             primary={<Typography variant="button">Global Model</Typography>}

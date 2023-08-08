@@ -1,11 +1,11 @@
 import { Close } from "@suid/icons-material";
 import { Alert, IconButton, LinearProgress } from "@suid/material";
 import { AlertColor } from "@suid/material/Alert";
-import { Show, createEffect, createSignal } from "solid-js";
+import { JSXElement, Show, createEffect, createSignal } from "solid-js";
 
 type AlertInfo = {
   severity: AlertColor;
-  content: string;
+  content: JSXElement;
 };
 
 export const [alertInfo, setAlertInfo] = createSignal<AlertInfo>();

@@ -6,12 +6,10 @@ import {
   ListItemText,
   Typography,
 } from "@suid/material";
-import { createSignal } from "solid-js";
+import TrainModelDialog, { setOpenTrainDialog } from "../TrainModelDialog";
 import OnHoverPopover from "../utils/OnHoverPopover";
-import TrainModelDialog from "../utils/TrainModelDialog";
 
 export default function TrainModelBtn() {
-  const [openTrainDialog, setOpenTrainDialog] = createSignal(false);
   return (
     <>
       <OnHoverPopover content="Continue training model from lastest global model with your own dataset">
@@ -26,11 +24,7 @@ export default function TrainModelBtn() {
           </ListItemButton>
         </ListItem>
       </OnHoverPopover>
-      <TrainModelDialog
-        fullWidth
-        open={openTrainDialog()}
-        onClose={() => setOpenTrainDialog(false)}
-      />
+      <TrainModelDialog />
     </>
   );
 }

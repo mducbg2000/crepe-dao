@@ -10,9 +10,10 @@ import {
 } from "@suid/material";
 import { For, Show } from "solid-js";
 import LeftBar from "../components/LeftBar";
-import PollInfo from "../components/PollInfo";
+import ModelPoll from "../components/ModelPoll";
 import TopBar from "../components/TopBar";
-import { storage } from "../global/contract-storage";
+import VoteModelDialog from "../components/VoteModelDialog";
+import { storage } from "../store/contract";
 import { getModelsInCurrentRound } from "../utils/extract-models-utils";
 
 export default function Dashboard() {
@@ -30,7 +31,7 @@ export default function Dashboard() {
           <List>
             <Stack spacing={3}>
               <For each={getModelsInCurrentRound(storage()!)}>
-                {(item) => <PollInfo model={item} />}
+                {(item) => <ModelPoll model={item} />}
               </For>
               <Show when={getModelsInCurrentRound(storage()!).length === 0}>
                 <Alert severity="info">
@@ -41,6 +42,7 @@ export default function Dashboard() {
           </List>
         </Show>
       </Box>
+      <VoteModelDialog />
     </Container>
   );
 }

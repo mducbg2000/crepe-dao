@@ -8,11 +8,13 @@ import {
   Typography,
 } from "@suid/material";
 import { Show } from "solid-js";
-import { address } from "../../global/account";
-import { storage } from "../../global/contract-storage";
+import appConfig from "../../config";
+import { address, availablePoint } from "../../store/account";
+import { balance, storage } from "../../store/contract";
+import CopyBtn from "../utils/CopyBtn";
 import OnHoverPopover from "../utils/OnHoverPopover";
 
-export default function DaoSetting() {
+export default function ContractInfo() {
   return (
     <>
       <ListItem dense>
@@ -20,7 +22,19 @@ export default function DaoSetting() {
           <Settings color="info" />
         </ListItemIcon>
         <ListItemText
-          primary={<Typography variant="button">DAO Settings:</Typography>}
+          primary={<Typography variant="button">Contract Info:</Typography>}
+        />
+      </ListItem>
+      <ListItem
+        dense
+        secondaryAction={appConfig.VITE_CONTRACT_ADDRESS.slice(0, 10) + "..."}
+      >
+        <ListItemText
+          primary={
+            <Typography variant="overline">
+              Address: <CopyBtn value={appConfig.VITE_CONTRACT_ADDRESS} />
+            </Typography>
+          }
         />
       </ListItem>
       <Show
@@ -31,15 +45,23 @@ export default function DaoSetting() {
             <Skeleton variant="rectangular" height={40} />
             <Skeleton variant="rectangular" height={40} />
             <Skeleton variant="rectangular" height={40} />
+            <Skeleton variant="rectangular" height={40} />
           </Stack>
         }
       >
         <ListItem
           dense
-          secondaryAction={storage()!.member.get(address()!) ?? "0"}
+          secondaryAction={
+            storage()!.members.find((m) => m.address == address()!)?.point ??
+            "0"
+          }
         >
           <ListItemText
-            primary={<Typography variant="overline">Your Point:</Typography>}
+            primary={
+              <Typography variant="overline">
+                Your Contribution Point:
+              </Typography>
+            }
           />
         </ListItem>
         <ListItem dense secondaryAction={storage()?.currentRound}>
@@ -62,6 +84,20 @@ export default function DaoSetting() {
             <ListItemText
               primary={
                 <Typography variant="overline">Super Majority:</Typography>
+              }
+            />
+          </ListItem>
+        </OnHoverPopover>
+        <ListItem dense secondaryAction={balance() + " ꜩ"}>
+          <ListItemText
+            primary={<Typography variant="overline">Balance:</Typography>}
+          />
+        </ListItem>
+        <OnHoverPopover content="The amount of points can be redeemed for ꜩ">
+          <ListItem dense secondaryAction={availablePoint()}>
+            <ListItemText
+              primary={
+                <Typography variant="overline">Available Reward:</Typography>
               }
             />
           </ListItem>

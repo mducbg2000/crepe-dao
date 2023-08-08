@@ -1,10 +1,10 @@
 import { CssBaseline } from "@suid/material";
 import { InMemorySigner } from "@taquito/signer";
 import { Show } from "solid-js";
-import { signer } from "./global/account";
 import Dashboard from "./pages/Dashboard";
 import LoginPage from "./pages/LoginPage";
-import "./services/download-weights-service";
+import "./services/device-downloads-service";
+import { signer } from "./store/account";
 
 export default function App() {
   return (

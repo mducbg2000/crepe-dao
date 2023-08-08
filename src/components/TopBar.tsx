@@ -8,21 +8,26 @@ import {
   Stack,
   Toolbar,
 } from "@suid/material";
-import { Show, createSignal } from "solid-js";
+import { Show } from "solid-js";
 
 import appConfig from "../config";
-import { setPrivateKey } from "../global/account";
+import { setPrivateKey } from "../store/account";
+import { blockLoading, nonBlockLoading } from "../store/loading";
 import Notification from "./utils/Notification";
 import OnHoverPopover from "./utils/OnHoverPopover";
-export const [nonBlockLoading, setNonBlockLoading] = createSignal(false);
-export const [blockLoading, setBlockLoading] = createSignal(false);
+
 export default function TopBar() {
   return (
     <AppBar position="fixed" sx={{ zIndex: 1900 }}>
+      <Show when={nonBlockLoading()}>
+        <LinearProgress color="info" />
+      </Show>
+      <Backdrop open={blockLoading()}>
+        <CircularProgress />
+      </Backdrop>
       <Toolbar sx={{ justifyContent: "space-between" }}>
         <OnHoverPopover content="View contract on tzkt.io">
           <Stack spacing={1} direction="row">
-            {/* <Avatar src={crepeLogo} /> */}
             <a
               href={`https://ghostnet.tzkt.io/${appConfig.VITE_CONTRACT_ADDRESS}`}
               target="_blank"
@@ -30,23 +35,6 @@ export default function TopBar() {
             >
               <img src="/banner.svg" height="40px" />
             </a>
-
-            {/* <Typography
-              sx={{
-                width: "fit-content",
-                cursor: "pointer",
-                pt: "4px",
-              }}
-              variant="h6"
-              noWrap
-              onClick={() =>
-                window.open(
-                  `https://ghostnet.tzkt.io/${appConfig.VITE_CONTRACT_ADDRESS}`,
-                )
-              }
-            >
-              CrepeDao
-            </Typography> */}
           </Stack>
         </OnHoverPopover>
         <Button
@@ -59,15 +47,6 @@ export default function TopBar() {
           Logout
         </Button>
       </Toolbar>
-      <Show when={nonBlockLoading()}>
-        <LinearProgress color="info" />
-      </Show>
-      <Backdrop
-        open={blockLoading()}
-        // sx={{ position: "relative", zIndex: 1500 }}
-      >
-        <CircularProgress />
-      </Backdrop>
       <Notification />
     </AppBar>
   );

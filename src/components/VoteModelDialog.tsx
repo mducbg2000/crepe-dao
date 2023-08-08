@@ -6,24 +6,36 @@ import {
   DialogContent,
   DialogTitle,
 } from "@suid/material";
-import Dialog, { DialogProps } from "@suid/material/Dialog";
+import Dialog from "@suid/material/Dialog";
+import { createSignal } from "solid-js";
+import { VoteValue, vote } from "../services/contract-service";
+import { refetchStorage } from "../store/contract";
+import { setBlockLoading } from "../store/loading";
+import { setAlertInfo } from "./utils/Notification";
 
-import { refetchStorage } from "../../global/contract-storage";
-import { VoteValue, vote } from "../../services/contract-service";
-import { setBlockLoading } from "../TopBar";
-import { setAlertInfo } from "./Notification";
+export const [voteCID, setVoteCID] = createSignal<string>();
 
-export default function VoteModelDialog(
-  props: { modelCid: string } & DialogProps,
-) {
+export default function VoteModelDialog() {
   const voteForModel = async (o: VoteValue) => {
     try {
       setBlockLoading(true);
-      await vote(props.modelCid, o);
+      const result = await vote(voteCID()!, o);
       await refetchStorage();
+      setVoteCID();
       setAlertInfo(() => ({
         severity: "success",
-        content: "Voting successful",
+        content: (
+          <>
+            Vote model successful at operation:&nbsp;
+            <a
+              href={`https://ghostnet.tzkt.io/${result}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {result}
+            </a>
+          </>
+        ),
       }));
     } catch (err) {
       setAlertInfo(() => ({
@@ -35,10 +47,10 @@ export default function VoteModelDialog(
     }
   };
   return (
-    <Dialog {...props}>
+    <Dialog open={voteCID() !== undefined} onClose={setVoteCID}>
       <DialogTitle>Vote Model</DialogTitle>
       <DialogContent>
-        <Chip color="secondary" icon={<Fingerprint />} label={props.modelCid} />
+        <Chip color="secondary" icon={<Fingerprint />} label={voteCID()} />
       </DialogContent>
       <DialogActions>
         <Button

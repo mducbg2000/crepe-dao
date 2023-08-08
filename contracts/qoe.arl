@@ -4,12 +4,12 @@ archetype qoe_dao
 // Config
 //-----------------------------------------------------------------------------
 
-variable model_topo_cid      : string   = "QmSAHEgh5NozH8ALJk11WP4SdKSC1pQwnrFJ7wadUkz1gS"  
-variable init_weights_cid    : string   = "QmayScJpjfU2FBosY2EJYz81D5Cw5H7dd4RnfrNFhF7qXZ"
-variable quorum              : rational = 4/5          
-variable super_majority      : rational = 2/3      
-variable fraction_of_members : rational = 1/4
-variable min_models          : nat      = 3
+variable init_topo_cid        : string   = "QmSAHEgh5NozH8ALJk11WP4SdKSC1pQwnrFJ7wadUkz1gS"  
+variable init_weights_cid     : string   = "QmayScJpjfU2FBosY2EJYz81D5Cw5H7dd4RnfrNFhF7qXZ"
+variable quorum               : rational = 4/5          
+variable super_majority       : rational = 2/3      
+variable fraction_of_members  : rational = 1/4
+variable min_models           : nat      = 3
 
 
 //-----------------------------------------------------------------------------
@@ -18,14 +18,16 @@ variable min_models          : nat      = 3
 
 variable current_round : nat = 1
 
-asset member identified by addr {
+asset members identified by addr {
   addr      : address;
   point     : nat = 1;
-  withdrew  : nat = 0;
+  withdrew  : nat = 1;
 }
 
-asset model identified by cid {
-  cid           : string;
+asset models identified by id {
+  id            : bytes;
+  topo_cid      : string;
+  weights_cid   : string;
   nbsamples     : nat;
   owner         : address;
   round         : nat;
@@ -33,7 +35,7 @@ asset model identified by cid {
   accept_point  : nat;
   reject_point  : nat = 0;
   abstain_point : nat = 0;
-  voter         : set<address>;
+  voters        : set<address>;
 }
 
 enum vote_value = 
@@ -45,67 +47,62 @@ enum vote_value =
 // Entrypoint
 //-----------------------------------------------------------------------------
 
-entry contribute(model_cid: string, number_of_samples: nat) {
+entry contribute(t_cid: string, w_cid: string, number_of_samples: nat) {
   fail if {
-    f: model.contains(model_cid) with "MODEL_ALREADY_EXIST";
-    f0: model.select(the.owner = source and the.round = current_round).count() > 0 with "CONTRIBUTED_IN_CURRENT_ROUND";
+    f: models.select(the.topo_cid = t_cid and the.weights_cid = w_cid).count() > 0 with "MODEL_ALREADY_EXIST";
+    f0: models.select(the.owner = source and the.round = current_round).count() > 0 with "CONTRIBUTE_ONCE_EACH_ROUND";
   }
   effect {
-    if not member.contains(source) then member.add({addr = source});
-
-    model.add({
-      cid           = model_cid;
+    if not members.contains(source) then members.add({addr = source});
+    const model_id  = keccak(pack(t_cid + w_cid));
+    models.add({
+      id            = model_id;
+      topo_cid      = t_cid;
+      weights_cid   = w_cid;
       nbsamples     = number_of_samples;
       owner         = source;
       round         = current_round;
-      accept_point  = member[source].point;
-      voter         = [source] 
+      accept_point  = members[source].point;
+      voters        = [source] 
     });
   }
 }
 
-entry vote(model_cid: string, value: vote_value) {
+entry vote(model_id: bytes, value: vote_value) {
   require {
-    r   : model[model_cid].accepted = false or model[model_cid].round = current_round otherwise "POLL_ENDED";
-    r0  : member.contains(source) otherwise "ONLY_MEMBER" 
+    r   : models[model_id].accepted = false or models[model_id].round = current_round otherwise "POLL_ENDED";
+    r0  : members.contains(source) otherwise "ONLY_MEMBER_CAN_VOTE" 
   }
   fail if {
-    f1  : model[model_cid].voter.contains(source) with "VOTED_ADDRESS"
+    f1  : models[model_id].voters.contains(source) with "VOTED_ADDRESS"
   }
   effect {
-    const voter_point = member[source].point;
-    model[model_cid].voter.add(source);
+    const voter_point = members[source].point;
+    models[model_id].voters.add(source);
     match value with
-    | ACCEPT  ->  model[model_cid].accept_point   += voter_point
-    | REJECT  ->  model[model_cid].reject_point   += voter_point
-    | _       ->  model[model_cid].abstain_point  += voter_point
+    | ACCEPT  ->  models[model_id].accept_point   += voter_point
+    | REJECT  ->  models[model_id].reject_point   += voter_point
+    | _       ->  models[model_id].abstain_point  += voter_point
     end;
 
-    if is_accepted(model_cid) then model[model_cid].accepted := true;
+    // if enough accept point then model is accepted
+    if is_enough_accept_point(model_id) then models[model_id].accepted := true;
 
-    // if enough accepted local models, finish round
-    const num_accepted_models = model.select(the.round = current_round and the.accepted = true).count();
-    const num_required_models = max(min_models, ceil(member.count() * fraction_of_members));
-
-    if num_accepted_models >= num_required_models then begin
-      const accepted_models = model.select(the.round = current_round and the.accepted = true);
-      for model_id in accepted_models do
-        const model_owner = model[model_id].owner;
-        member[model_owner].point += 1;
-      done;
-    current_round += 1
-    end
+    // if enough accepted local models then finish round
+    if is_enough_accepted_model() then finish_round()
   }
 }
 
+entry default() {}
+
 entry withdraw(amount: nat) {
   require {
-    r1: member.contains(source) otherwise "ONLY_MEMBER";
-    r2: member[source].point >= member[source].withdrew + amount otherwise "NOT_ENOUGH_POINT";
+    r1: members.contains(source) otherwise "ONLY_MEMBER";
+    r2: members[source].point >= members[source].withdrew + amount otherwise "NOT_ENOUGH_POINT";
   }
   effect {
-    transfer (amount*1tz) to source;     // 1 point = 1 tez = 0.85$ = 20.000₫
-    member[source].withdrew += amount;
+    transfer (amount*0.25tz) to source;     // 1 point = 0.25 tez = 0.21$ = 5.000₫
+    members[source].withdrew += amount;
   }
 }
 
@@ -113,22 +110,37 @@ entry withdraw(amount: nat) {
 // Utils
 //-----------------------------------------------------------------------------
 
-function participation_rate(model_cid: string) : rational {
-  const participation : nat = model[model_cid].accept_point + model[model_cid].reject_point + model[model_cid].abstain_point;
-  const total         : nat = member.sum(point);
+function participation_rate_of(model_id: bytes) : rational {
+  const participation : nat = models[model_id].accept_point + models[model_id].reject_point + models[model_id].abstain_point;
+  const total         : nat = members.sum(point);
   return (participation / total)
 }
 
-function accept_rate(model_cid: string) : rational {
-  return (model[model_cid].accept_point / (model[model_cid].accept_point + model[model_cid].reject_point))
+function accept_rate_of(model_id: bytes) : rational {
+  return (models[model_id].accept_point / (models[model_id].accept_point + models[model_id].reject_point))
 }
 
-function is_accepted(model_cid: string) : bool {
-  const p_rate = participation_rate(model_cid);
+function is_enough_accept_point(model_id: bytes) : bool {
+  const p_rate = participation_rate_of(model_id);
   if p_rate < quorum then 
     return false
   else begin
-    const a_rate = accept_rate(model_cid);
+    const a_rate = accept_rate_of(model_id);
     return (a_rate >= super_majority)
   end
+}
+
+function is_enough_accepted_model() : bool {
+  const num_accepted_models = models.select(the.round = current_round and the.accepted = true).count();
+  const num_required_models = max(min_models, ceil(members.count() * fraction_of_members));
+  return (num_accepted_models >= num_required_models)
+}
+
+function finish_round() {
+  const accepted_models = models.select(the.round = current_round and the.accepted = true);
+  for model_id in accepted_models do
+      const model_owner = models[model_id].owner;
+      members[model_owner].point += 4;
+  done;
+  current_round += 1
 }

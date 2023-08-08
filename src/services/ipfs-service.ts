@@ -7,7 +7,7 @@ interface IpfsAddFileResult {
   Size: string;
 }
 
-export const addFile = async (file: File) => {
+export const addFile = async (file: File | Blob) => {
   const form = new FormData();
   form.append("file", file);
   const response = await axios.postForm(

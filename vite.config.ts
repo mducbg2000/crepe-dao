@@ -24,5 +24,8 @@ export default defineConfig(() => ({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
-  }
+  },
+  test: {
+    testTimeout: 60000,
+  },
 }));

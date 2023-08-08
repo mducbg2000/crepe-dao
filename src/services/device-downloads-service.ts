@@ -1,26 +1,31 @@
 import * as tf from "@tensorflow/tfjs";
 
 const DEFAULT_FILE_NAME_PREFIX = "model";
+const DEFAULT_JSON_EXTENSION_NAME = ".json";
 const DEFAULT_WEIGHT_DATA_EXTENSION_NAME = ".weights.bin";
 
 function defer<T>(f: () => T): Promise<T> {
   return new Promise((resolve) => setTimeout(resolve)).then(f);
 }
 
-export class WeightsDownloads implements tf.io.IOHandler {
+export class DeviceDownloads implements tf.io.IOHandler {
   private readonly weightDataFileName: string;
+  private readonly modelJsonFileName: string;
   private readonly weightDataAnchor: HTMLAnchorElement =
     document.createElement("a");
+  private readonly modelJsonAnchor: HTMLAnchorElement =
+    document.createElement("a");
 
-  static readonly URL_SCHEME = "weights://";
+  static readonly URL_SCHEME = "device://";
 
   constructor(fileNamePrefix?: string) {
     if (fileNamePrefix == null || fileNamePrefix.length === 0) {
       fileNamePrefix = DEFAULT_FILE_NAME_PREFIX;
     }
-    if (fileNamePrefix.startsWith(WeightsDownloads.URL_SCHEME)) {
-      fileNamePrefix = fileNamePrefix.slice(WeightsDownloads.URL_SCHEME.length);
+    if (fileNamePrefix.startsWith(DeviceDownloads.URL_SCHEME)) {
+      fileNamePrefix = fileNamePrefix.slice(DeviceDownloads.URL_SCHEME.length);
     }
+    this.modelJsonFileName = fileNamePrefix + DEFAULT_JSON_EXTENSION_NAME;
     this.weightDataFileName =
       fileNamePrefix + DEFAULT_WEIGHT_DATA_EXTENSION_NAME;
   }
@@ -33,8 +38,6 @@ export class WeightsDownloads implements tf.io.IOHandler {
       );
     }
 
-    // TODO(mattsoulanille): Support saving models over 2GB that exceed
-    // Chrome's ArrayBuffer size limit.
     const weightBuffer = tf.io.CompositeArrayBuffer.join(
       modelArtifacts.weightData,
     );
@@ -49,9 +52,28 @@ export class WeightsDownloads implements tf.io.IOHandler {
           "in binary formats yet.",
       );
     } else {
+      const weightsManifest: tf.io.WeightsManifestConfig = [
+        {
+          paths: ["./" + this.weightDataFileName],
+          weights: modelArtifacts.weightSpecs ?? [],
+        },
+      ];
+      const modelJSON: tf.io.ModelJSON = getModelJSONForModelArtifacts(
+        modelArtifacts,
+        weightsManifest,
+      );
+
+      const modelJsonURL = window.URL.createObjectURL(
+        new Blob([JSON.stringify(modelJSON)], { type: "application/json" }),
+      );
+
+      const jsonAnchor = this.modelJsonAnchor
+      jsonAnchor.download = this.modelJsonFileName;
+      jsonAnchor.href = modelJsonURL;
+
+      await defer(() => jsonAnchor.dispatchEvent(new MouseEvent("click")));
       if (modelArtifacts.weightData != null) {
-        const weightDataAnchor =
-          this.weightDataAnchor ?? document.createElement("a");
+        const weightDataAnchor = this.weightDataAnchor;
 
         weightDataAnchor.download = this.weightDataFileName;
         weightDataAnchor.href = weightsURL;
@@ -67,18 +89,18 @@ export class WeightsDownloads implements tf.io.IOHandler {
   }
 }
 
-export const browserDownloadsRouter = (url: string | string[]) => {
-  if (!Array.isArray(url) && url.startsWith(WeightsDownloads.URL_SCHEME)) {
-    return browserDownloads(url.slice(WeightsDownloads.URL_SCHEME.length));
+export const deviceDownloadsRouter = (url: string | string[]) => {
+  if (!Array.isArray(url) && url.startsWith(DeviceDownloads.URL_SCHEME)) {
+    return deviceDownloads(url.slice(DeviceDownloads.URL_SCHEME.length));
   } else {
     return null as unknown as tf.io.IOHandler;
   }
 };
 
-tf.io.registerSaveRouter(browserDownloadsRouter);
+tf.io.registerSaveRouter(deviceDownloadsRouter);
 
-export function browserDownloads(fileNamePrefix = "model"): tf.io.IOHandler {
-  return new WeightsDownloads(fileNamePrefix);
+export function deviceDownloads(fileNamePrefix = "model"): tf.io.IOHandler {
+  return new DeviceDownloads(fileNamePrefix);
 }
 
 export function getModelJSONForModelArtifacts(
