@@ -44,7 +44,7 @@ export default function RedeemDialog() {
         severity: "success",
         content: (
           <>
-            Fundraise successful at operation:&nbsp;
+            Earn ꜩ successful at operation:&nbsp;
             <a
               href={`https://ghostnet.tzkt.io/${result}`}
               target="_blank"
