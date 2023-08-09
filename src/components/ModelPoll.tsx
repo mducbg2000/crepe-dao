@@ -70,8 +70,9 @@ export default function ModelPoll(props: { model: ModelInfo }) {
       label: "Accept",
       value: (m().acceptPoint / total()) * 100,
       color: "success",
-      description: `${m().acceptPoint} / ${total()},
-      )} (${Math.round((m().acceptPoint / total()) * 100)}%)`,
+      description: `${m().acceptPoint} / ${total()} (${Math.round(
+        (m().acceptPoint / total()) * 100,
+      )}%)`,
     },
     {
       label: "Reject",
